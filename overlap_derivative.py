@@ -53,6 +53,13 @@ def get_swx1(wxlambda0, wxlambda1, nelec):
     return get_swx1
 
 
+def get_g1_list(g0_list, complexsymmetric: bool, mol, atom, coord, nelec):
+
+    g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
+                            g0_list[i]) for i in range(g0_list.shape[0])]
+
+    return g1_list
+
 def get_s1mat(nnoci, g0_list, g1_list, mol, atom, coord, nelec):
 
     s1mat = np.zeros(nnoci)
