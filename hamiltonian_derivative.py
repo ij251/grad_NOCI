@@ -1,3 +1,4 @@
+import numpy as np
 from pyscf import mol, scf, grad
 from first_order_ghf import *
 from zeroth_order_ghf import *

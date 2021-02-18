@@ -55,13 +55,14 @@ def lowdin_prod(wxlambda0, rmind):
 
 def get_swx1(wxlambda0, wxlambda1, nelec):
 
+    wxlambda1_diag = np.diag(wxlambda1)
     swx1 = np.sum(wxlambda1_diag[j,j]*lowdin_prod(wxlambda0, [j])
                   for j in range(nelec))
 
     return get_swx1
 
 
-def get_g1_list(g0_list, complexsymmetric: bool, mol, atom, coord, nelec):
+def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
     g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
                             g0_list[i]) for i in range(g0_list.shape[0])]
@@ -69,10 +70,11 @@ def get_g1_list(g0_list, complexsymmetric: bool, mol, atom, coord, nelec):
     return g1_list
 
 
-def get_s1mat(nnoci, g0_list, g1_list, mol, atom, coord, nelec,
-              complexsymmetric: bool):
+def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
-    s1mat = np.zeros(nnoci)
+    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
+    nnoci = g0_list.shape[0]
+    s1mat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
         for x in range(nnoci):
