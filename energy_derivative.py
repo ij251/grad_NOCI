@@ -4,6 +4,7 @@ from first_order_ghf import *
 from zeroth_order_ghf import *
 from overlap_derivative import *
 from hamiltonian_derivative import *
+from non_ortho import *
 
 
 def get_e0_noci(a, mol, g0_list, nelec, complexsymmetric):
@@ -36,5 +37,3 @@ def get_e1_noci(a, mol, atom, coord, g0_list, nelec, complexsymmetric):
                          for w in range(nnoci) for x in range(nnoci))
 
     return e1
-
-
