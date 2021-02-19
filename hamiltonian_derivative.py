@@ -5,10 +5,9 @@ from zeroth_order_ghf import *
 from non_ortho import *
 
 
-def get_onewx0(mol, gw0, gx0, wxlambda0, nelec, complexsymmetric: bool):
+def get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
 
     hcore0 = get_hcore0(mol)
-    gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
 
     onewx0 = 0
     # onewx0 = np.sum(lowdin_prod(wxlambda0, [m])
@@ -27,14 +26,12 @@ def get_onewx0(mol, gw0, gx0, wxlambda0, nelec, complexsymmetric: bool):
     return onewx0
 
 
-def get_onewx1(mol, atom, coord, gw0, gx0, gw1, gx1, wxlambda0, wxlambda1,
-               nelec, complexsymmetric: bool):
+def get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
+               wxlambda1, nelec, complexsymmetric: bool):
 
     hcore0 = get_hcore0(mol)
     hcore1 = get_hcore1(mol, atom, coord)
     wxlambda1_diag = np.diag(wxlambda1)
-    gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
-    gw1_t, gx1_t = transform_g(gw1, gx1, mol, complexsymmetric)
 
     onewx1 = 0
 
@@ -57,10 +54,9 @@ def get_onewx1(mol, atom, coord, gw0, gx0, gw1, gx1, wxlambda0, wxlambda1,
     return onexw1
 
 
-def get_twowx0(mol, gw0, gx0, wxlambda0, nelec, complexsymmetric: bool):
+def get_twowx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
 
     j0 = get_j0(mol)
-    gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
 
     twowx0 = 0
     for m in range(nelec):
@@ -78,14 +74,12 @@ def get_twowx0(mol, gw0, gx0, wxlambda0, nelec, complexsymmetric: bool):
     return twowx0
 
 
-def get_twowx1(mol, atom, coord, gw0, gx0, gw1, gx1, wxlambda0, wxlambda1,
-               nelec, complexsymmetric: bool):
+def get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
+               wxlambda1, nelec, complexsymmetric: bool):
 
     j0 = get_j0(mol)
     j1 = get_j1(mol, atom, coord)
     wxlambda1_diag = np.diag(wxlambda1)
-    gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
-    gw1_t, gx1_t = transform_g(gw1, gx1, mol, complexsymmetric)
 
     twowx1 = 0
     for m in range(nelec):
@@ -152,12 +146,13 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
             gw0 = g0_list[w]
             gx0 = g0_list[x]
+            gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
 
             wxlambda0 = get_wxlambda0(gw0, gx0, mol, complexsymmetric)
 
-            onewx0 = get_onewx0(mol, gw0, gx0, wxlambda0, nelec,
+            onewx0 = get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec,
                                 complexsymmetric)
-            twowx0 = get_twowx0(mol, gw0, gx0, wxlambda0, nelec,
+            twowx0 = get_twowx0(mol, gw0_t, gx0_t, wxlambda0, nelec,
                                 complexsymmetric)
             nucwx0 = get_nucwx0(mol, wxlambda0, complexsymmetric)
 
@@ -168,7 +163,6 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
 def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
-    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
     nnoci = g0_list.shape[0]
     h1mat = np.zeros((nnoci,nnoci))
 
@@ -177,20 +171,24 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
             gw0 = g0_list[w]
             gx0 = g0_list[x]
-            gw1 = g1_list[w]
-            gx1 = g1_list[x]
+            gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
+            gw1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
+                                 gw0_t)
+            gx1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
+                                 gx0_t)
+
 
             wxlambda0 = get_wxlambda0(gw0, gx0, mol, complexsymmetric)
             wxlambda1 = get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord,
                                       complexsymmetric)
 
-            onewx1 = get_onewx1(mol, atom, coord, gw0, gx0, gw1, gx1,
+            onewx1 = get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t,
                                 wxlambda0, wxlambda1, nelec, complexsymmetric)
-            twowx1 = get_twowx1(mol, atom, coord, gw0, gx0, gw1, gx1,
+            twowx1 = get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t,
                                 wxlambda0, wxlambda1, nelec, complexsymmetric)
             nucwx1 = get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
                                 complexsymmetric)
 
-            h1mat[w,x] = onewx1 + twowx1 + nucwx1 
+            h1mat[w,x] = onewx1 + twowx1 + nucwx1
 
     return h1mat
