@@ -4,7 +4,7 @@ from first_order_ghf import *
 from zeroth_order_ghf import *
 
 
-def get_wxlambda0(gw0, gx0, mol, complexsymmetric: bool):
+def get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric: bool):
 
     r"""Calculates the zeroth order diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -40,20 +40,32 @@ def get_wxlambda0(gw0, gx0, mol, complexsymmetric: bool):
     """
 
     sao0 = mol.intor("int1e_ovlp")
+    omega = np.identity(2)
+    sao0 = np.kron(omega, sao0)
     if not complexsymmetric:
-        wxs0 = np.linalg.multi_dot([gw0.T.conj(), sao0, gx0])
+        wxs0 = np.linalg.multi_dot([gw0[:, 0:nelec].T.conj(), sao0,
+                                    gx0[:, 0:nelec]])
     else:
-        wxs0 = np.linalg.multi_dot([gw0.T, sao0, gx0])
+        wxs0 = np.linalg.multi_dot([gw0[:, 0:nelec].T, sao0,
+                                    gx0[:, 0:nelec]])
 
     wxu,_,wxvh = np.linalg.svd(wxs0)
     wxv = wxvh.T.conj()
+
+    assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
+                       rtol = 1.e-5, atol = 1.e-8)
+    assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
+                       rtol = 1.e-5, atol = 1.e-8)
+
+    # print("wxs0, overlap between MOs of the determinants\n", wxs0)
+    # print("wx U matrix:\n", wxu, "\nwx V matrix:\n", wxv)
 
     wxlambda0 = np.linalg.multi_dot([wxu.T.conj(), wxs0, wxv])
 
     return wxlambda0
 
 
-def get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord,
+def get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord, nelec,
                   complexsymmetric: bool):
 
     r"""Calculates the first order diagonal matrix of singular values from
@@ -106,21 +118,36 @@ def get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord,
     """
 
     sao0 = mol.intor("int1e_ovlp")
+    omega = np.identity(2)
+    sao0 = np.kron(omega, sao0)
     sao1 = get_s1(mol, atom, coord)
 
     if not complexsymmetric:
-        wxs0 = np.linalg.multi_dot([gw0.T.conj(), sao0, gx0])
-        wxs1 = (np.linalg.multi_dot([gw1.T.conj(), sao0, gx0])
-                + np.linalg.multi_dot([gw0.T.conj(), sao1, gx0])
-                + np.linalg.multi_dot([gw0.T.conj(), sao0, gx1]))
+        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T.conj(), sao0,
+                                    gx0[:,0:nelec]])
+        wxs1 = (np.linalg.multi_dot([gw1[:,0:nelec].T.conj(), sao0,
+                                     gx0[:,0:nelec]])
+                + np.linalg.multi_dot([gw0[:,0:nelec].T.conj(), sao1,
+                                       gx0[:,0:nelec]])
+                + np.linalg.multi_dot([gw0[:,0:nelec].T.conj(), sao0,
+                                       gx1[:,0:nelec]]))
     else:
-        wxs0 = np.linalg.multi_dot([gw0.T, sao0, gx0])
-        wxs1 = (np.linalg.multi_dot([gw1.T, sao0, gx0])
-                + np.linalg.multi_dot([gw0.T, sao1, gx0])
-                + np.linalg.multi_dot([gw0.T, sao0, gx1]))
+        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T, sao0,
+                                    gx0[:,0:nelec]])
+        wxs1 = (np.linalg.multi_dot([gw1[:,0:nelec].T, sao0,
+                                     gx0[:,0:nelec]])
+                + np.linalg.multi_dot([gw0[:,0:nelec].T, sao1,
+                                       gx0[:,0:nelec]])
+                + np.linalg.multi_dot([gw0[:,0:nelec].T, sao0,
+                                       gx1[:,0:nelec]]))
 
     wxu,_,wxvh = np.linalg.svd(wxs0)
     wxv = wxvh.T.conj()
+
+    assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
+                       rtol = 1.e-5, atol = 1.e-8)
+    assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
+                       rtol = 1.e-5, atol = 1.e-8)
 
     wxlambda1 = np.diag(np.diag(np.linalg.multi_dot([wxu.T.conj(),wxs1,wxv])))
 
@@ -144,7 +171,7 @@ def lowdin_prod(wxlambda0, rmind):
     :returns: A value for the singular value product
     """
     wxlambda0_diag = np.diag(wxlambda0)
-    ind = list(set(range(len(l)))-set(rmind))
+    ind = list(set(range(len(wxlambda0_diag)))-set(rmind))
     lowdin_prod = np.prod(wxlambda0_diag[ind])
 
     return lowdin_prod
@@ -174,12 +201,12 @@ def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     """
 
     g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
-                            g0_list[i]) for i in range(g0_list.shape[0])]
+                            g0_list[i]) for i in range(len(g0_list))]
 
     return g1_list
 
 
-def transform_g(gw0, gx0, mol, complexsymmetric: bool):
+def transform_g(gw0, gx0, mol, nelec, complexsymmetric: bool):
 
     r"""Uses a Löwdin transformation to bi-orthogonalise a pair of MO
     coefficient matrices and return their transformed forms, given by:
@@ -211,13 +238,15 @@ def transform_g(gw0, gx0, mol, complexsymmetric: bool):
             determiants.
     """
 
-    omega = np.identity(2)
     sao0 = mol.intor("int1e_ovlp")
+    omega = np.identity(2)
     sao0 = np.kron(omega, sao0)
     if not complexsymmetric:
-        wxs0 = np.linalg.multi_dot([gw0.T.conj(), sao0, gx0])
+        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T.conj(), sao0,
+                                    gx0[:,0:nelec]])
     else:
-        wxs0 = np.linalg.multi_dot([gw0.T, sao0, gx0])
+        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T, sao0,
+                                    gx0[:,0:nelec]])
 
     wxu,_,wxvh = np.linalg.svd(wxs0)
     wxv = wxvh.T.conj()
@@ -225,14 +254,17 @@ def transform_g(gw0, gx0, mol, complexsymmetric: bool):
     det_wxv = np.linalg.det(wxv)
 
     if not complexsymmetric:
-        gw0_t = np.dot(gw0, wxu)
+        gw0_t = np.dot(gw0[:,0:nelec], wxu)
     else:
-        gw0_t = np.dot(gw0, wxu.conj())
+        gw0_t = np.dot(gw0[:,0:nelec], wxu.conj())
 
-    gx0_t = np.dot(gx0, wxv)
+    gx0_t = np.dot(gx0[:,0:nelec], wxv)
 
     gw0_t[:,0] *= det_wxu.conj()
     gx0_t[:,0] *= det_wxv.conj()
+
+    # print(wxu)
+    # print(det_wxu)
 
     return gw0_t, gx0_t
 
@@ -260,9 +292,11 @@ def get_xwp0(gw0_t, gx0_t, orbital_num, complexsymmetric: bool):
     """
 
     if not complexsymmetric:
-        xwp0 = np.dot(gx0_t[:, orbital_num], gw0_t[:, orbital_num].T.conj())
+        xwp0 = np.einsum("i,j->ij", gx0_t[:, orbital_num],
+                         gw0_t[:, orbital_num].conj())
     else:
-        xwp0 = np.dot(gx0_t[:, orbital_num], gw0_t[:, orbital_num].T)
+        xwp0 = np.einsum("i,j->ij", gx0_t[:, orbital_num],
+                         gw0_t[:, orbital_num])
 
     return xwp0
 
@@ -296,10 +330,14 @@ def get_xwp1(gw0_t, gx0_t, gw1_t, gx1_t, orbital_num, complexsymmetric: bool):
     """
 
     if not complexsymmetric:
-        xwp1 = (np.dot(gx0_t[:, orbital_num],gw1_t[:, orbital_num].T.conj())
-                +np.dot(gx1_t[:, orbital_num],gw0_t[:, orbital_num].T.conj()))
+        xwp1 = (np.einsum("i,j->ij", gx0_t[:, orbital_num],
+                         gw1_t[:, orbital_num].conj())
+                + np.einsum("i,j->ij", gx1_t[:, orbital_num],
+                            gw0_t[:, orbital_num].conj()))
     else:
-        xwp1 = (np.dot(gx0_t[:, orbital_num],gw1_t[:, orbital_num].T)
-                +np.dot(gx1_t[:, orbital_num],gw0_t[:, orbital_num].T))
+        xwp1 = (np.einsum("i,j->ij", gx0_t[:, orbital_num],
+                         gw1_t[:, orbital_num])
+                + np.einsum("i,j->ij", gx1_t[:, orbital_num],
+                            gw0_t[:, orbital_num]))
 
     return xwp1

@@ -3,6 +3,7 @@ from pyscf import gto, scf, grad
 from first_order_ghf import *
 from zeroth_order_ghf import *
 from non_ortho import *
+from overlap_derivative import *
 
 
 def get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
@@ -36,6 +37,7 @@ def get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
     """
 
     hcore0 = get_hcore0(mol)
+    # print("hcore0:\n", hcore0)
 
     onewx0 = 0
     # onewx0 = np.sum(lowdin_prod(wxlambda0, [m])
@@ -48,6 +50,7 @@ def get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
 
         lowdin_prod0 = lowdin_prod(wxlambda0, [m])
         xwp0 = get_xwp0(gw0_t, gx0_t, m, complexsymmetric)
+        # print("xwp0:\n", xwp0)
 
         onewx0 += lowdin_prod0 * np.einsum("ij,ji->", hcore0, xwp0)
 
@@ -111,17 +114,16 @@ def get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
 
     hcore0 = get_hcore0(mol)
     hcore1 = get_hcore1(mol, atom, coord)
-    wxlambda1_diag = np.diag(wxlambda1)
 
     onewx1 = 0
 
     for m in range(nelec):
 
         lowdin_prod0 = lowdin_prod(wxlambda0, [m])
-        lowdin_prod1 = (np.sum(wxlambda1_diag[j,j]*lowdin_prod(wxlambda0,
-                                                               [j,m])
+        lowdin_prod1 = (np.sum(wxlambda1[j,j]*lowdin_prod(wxlambda0,
+                                                          [j,m])
                               for j in range(nelec))
-                        - wxlambda1_diag[m,m]*lowdin_prod(wxlambda0,[m]))
+                        - wxlambda1[m,m]*lowdin_prod(wxlambda0,[m]))
         xwp0 = get_xwp0(gw0_t, gx0_t, m, complexsymmetric)
         xwp1 = get_xwp1(gw0_t, gx0_t, gw0_t, gx1_t, m, complexsymmetric)
 
@@ -131,7 +133,7 @@ def get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
 
         onewx1 += a + b + c
 
-    return onexw1
+    return onewx1
 
 
 def get_twowx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):
@@ -253,7 +255,6 @@ def get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
 
     j0 = get_j0(mol)
     j1 = get_j1(mol, atom, coord)
-    wxlambda1_diag = np.diag(wxlambda1)
 
     twowx1 = 0
     for m in range(nelec):
@@ -261,11 +262,11 @@ def get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
 
 
             lowdin_prod0 = lowdin_prod(wxlambda0, [m,n])
-            lowdin_prod1 = (np.sum(wxlambda1_diag[j,j]*lowdin_prod(wxlambda0,
+            lowdin_prod1 = (np.sum(wxlambda1[j,j]*lowdin_prod(wxlambda0,
                                                                    [j,m,n])
                                   for j in range(nelec))
-                            - wxlambda1_diag[m,m]*lowdin_prod(wxlambda0,[m])
-                            - wxlambda1_diag[n,n]*lowdin_prod(wxlambda0,[n]))
+                            - wxlambda1[m,m]*lowdin_prod(wxlambda0,[m])
+                            - wxlambda1[n,n]*lowdin_prod(wxlambda0,[n]))
             xwp0_m = get_xwp0(gw0_t, gx0_t, m, complexsymmetric)
             xwp1_m = get_xwp1(gw0_t, gx0_t, gw0_t, gx1_t, m, complexsymmetric)
             xwp0_n = get_xwp0(gw0_t, gx0_t, n, complexsymmetric)
@@ -282,7 +283,7 @@ def get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,
 
             twowx1 += 0.5 * (a + b + c)
 
-    return twoxw1
+    return twowx1
 
 
 def get_nucwx0(mol, wxlambda0, complexsymmetric: bool):
@@ -376,7 +377,7 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
     :returns: Matrix of hamiltonian elements.
     """
-    nnoci = g0_list.shape[0]
+    nnoci = len(g0_list)
     h0mat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
@@ -384,9 +385,9 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
             gw0 = g0_list[w]
             gx0 = g0_list[x]
-            gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
+            gw0_t, gx0_t = transform_g(gw0, gx0, mol, nelec, complexsymmetric)
 
-            wxlambda0 = get_wxlambda0(gw0, gx0, mol, complexsymmetric)
+            wxlambda0 = get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric)
 
             onewx0 = get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec,
                                 complexsymmetric)
@@ -395,6 +396,9 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
             nucwx0 = get_nucwx0(mol, wxlambda0, complexsymmetric)
 
             h0mat[w,x] = onewx0 + twowx0 + nucwx0
+
+            print(w, x)
+            print("two electron:", twowx0)
 
     return h0mat
 
@@ -421,24 +425,27 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
     :returns: Matrix of hamiltonian element derivatives.
     """
-    nnoci = g0_list.shape[0]
+    nnoci = len(g0_list)
     h1mat = np.zeros((nnoci,nnoci))
+    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
 
     for w in range(nnoci):
         for x in range(nnoci):
 
             gw0 = g0_list[w]
             gx0 = g0_list[x]
-            gw0_t, gx0_t = transform_g(gw0, gx0, mol, complexsymmetric)
+            gw1 = g1_list[w]
+            gx1 = g1_list[x]
+            gw0_t, gx0_t = transform_g(gw0, gx0, mol, nelec, complexsymmetric)
             gw1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
                                  gw0_t)
             gx1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
                                  gx0_t)
 
 
-            wxlambda0 = get_wxlambda0(gw0, gx0, mol, complexsymmetric)
+            wxlambda0 = get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric)
             wxlambda1 = get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord,
-                                      complexsymmetric)
+                                      nelec, complexsymmetric)
 
             onewx1 = get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t,
                                 wxlambda0, wxlambda1, nelec, complexsymmetric)

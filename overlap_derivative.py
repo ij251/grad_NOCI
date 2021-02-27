@@ -44,17 +44,46 @@ def get_swx1(wxlambda0, wxlambda1, nelec):
 
     :returns: The numerical value for the overlap derivative.
     """
-    wxlambda1_diag = np.diag(wxlambda1)
-    swx1 = np.sum(wxlambda1_diag[j,j]*lowdin_prod(wxlambda0, [j])
+    swx1 = np.sum(wxlambda1[j,j]*lowdin_prod(wxlambda0, [j])
                   for j in range(nelec))
 
-    return get_swx1
+    return swx1
+
+
+def get_s0mat(mol, g0_list, nelec, complexsymmetric):
+
+    r"""Constructs a matrix of the same dimensions as the noci expansion of
+    the overlap between all determinant combinations.
+
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param g0_list: Python list of molecular orbital coefficient matrices.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+
+    :returns: Matrix of overlaps between determinants. 
+    """
+
+    nnoci = len(g0_list)
+    s0mat = np.zeros((nnoci,nnoci))
+
+    for w in range(nnoci):
+        for x in range(nnoci):
+
+            wxlambda0 = get_wxlambda0(g0_list[w], g0_list[x], mol,
+                                      nelec, complexsymmetric)
+
+            s0mat[w,x] += lowdin_prod(wxlambda0, [])
+
+    return s0mat
 
 
 def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
-    r"""Contructs a matrix of the same dimesions as the noci expansion of the
-    overlap derivatives between all determinant combinations.
+    r"""Constructs a matrix of the same dimensions as the noci expansion of
+    the overlap derivatives between all determinant combinations.
 
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.
@@ -74,16 +103,16 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     :returns: Matrix of overlap derivatives.
     """
     g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
-    nnoci = g0_list.shape[0]
+    nnoci = len(g0_list)
     s1mat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = get_wxlambda0(g0_list[w], g0_list[x], mol,
+            wxlambda0 = get_wxlambda0(g0_list[w], g0_list[x], mol, nelec,
                                       complexsymmetric)
             wxlambda1 = get_wxlambda1(g0_list[w], g1_list[w], g0_list[x],
-                                      g1_list[x], mol, atom, coord,
+                                      g1_list[x], mol, atom, coord, nelec,
                                       complexsymmetric)
 
             s1mat[w,x] = get_swx1(wxlambda0, wxlambda1, nelec)
