@@ -37,18 +37,18 @@ a = [0.9971103, -0.0759676]
 
 g0_list = [g0ghf0, g0ghf1]
 
-# lambda0_00 = get_wxlambda0(g0_list[0], g0_list[0], mol, False)
-lambda0_01 = get_wxlambda0(g0_list[0], g0_list[1], mol, nelec, False)
-# lambda0_10 = get_wxlambda0(g0_list[1], g0_list[0], mol, False)
-# lambda0_11 = get_wxlambda0(g0_list[1], g0_list[1], mol, False)
+lambda0_00,_,_ = lowdin_pairing0(g0_list[0], g0_list[0], mol, nelec, False)
+# lambda0_01,_,_ = lowdin_pairing0(g0_list[0], g0_list[1], mol, nelec, False)
+# lambda0_10,_,_ = lowdin_pairing0(g0_list[1], g0_list[0], mol, nelec, False)
+# lambda0_11,_,_ = lowdin_pairing0(g0_list[1], g0_list[1], mol, nelec, False)
 
 # print("lowdin overlaps between 0 and 0:\n", lambda0_00)
-print("lowdin overlaps between 0 and 1:\n", lambda0_01)
+# print("lowdin overlaps between 0 and 1:\n", lambda0_01)
 # print("lowdin overlaps between 1 and 0:\n", lambda0_10)
 # print("lowdin overlaps between 1 and 1:\n", lambda0_11)
 
-s0mat = get_s0mat(mol, g0_list, nelec, False)
-print("matrix of overlaps between determinants:\n", s0mat)
+# s0mat = get_s0mat(mol, g0_list, nelec, False)
+# print("matrix of overlaps between determinants:\n", s0mat)
 
-h0mat = get_h0mat(mol, g0_list, nelec, False)
-print("matrix of hamiltonaian elements between determinants:\n", h0mat)
+# h0mat = get_h0mat(mol, g0_list, nelec, False)
+# print("matrix of hamiltonaian elements between determinants:\n", h0mat)

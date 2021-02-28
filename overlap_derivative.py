@@ -72,8 +72,8 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = get_wxlambda0(g0_list[w], g0_list[x], mol,
-                                      nelec, complexsymmetric)
+            wxlambda0 = lowdin_pairing0(g0_list[w], g0_list[x], mol,
+                                      nelec, complexsymmetric)[0]
 
             s0mat[w,x] += lowdin_prod(wxlambda0, [])
 
@@ -109,8 +109,8 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = get_wxlambda0(g0_list[w], g0_list[x], mol, nelec,
-                                      complexsymmetric)
+            wxlambda0 = lowdin_pairing0(g0_list[w], g0_list[x], mol, nelec,
+                                      complexsymmetric)[0]
             wxlambda1 = get_wxlambda1(g0_list[w], g1_list[w], g0_list[x],
                                       g1_list[x], mol, atom, coord, nelec,
                                       complexsymmetric)

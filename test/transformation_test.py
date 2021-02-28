@@ -38,7 +38,7 @@ g0_list = [g0ghf0, g0ghf1]
 
 g00 = g0_list[0]
 g10 = g0_list[1]
-g00_t, g10_t = transform_g(g00, g10, mol, False)
+_, g00_t, g10_t = lowdin_pairing0(g00, g10, mol, nelec, False)
 
 g01_t = g1_iteration(False, mol, atom, coord, nelec, g00_t)
 g11_t = g1_iteration(False, mol, atom, coord, nelec, g10_t)
@@ -48,6 +48,8 @@ g11 = g1_iteration(False, mol, atom, coord, nelec, g10)
 
 e1_t = get_e1_elec(mol, g01_t, atom, coord, False, nelec)
 e1 = get_e1_elec(mol, g01, atom, coord, False, nelec)
+print("g0:\n", g00)
+print("g0_t:\n", g00_t)
 
 print("e1 from non transformed g0:\n", e1)
 print("e1 from transformed g0:\n", e1_t)

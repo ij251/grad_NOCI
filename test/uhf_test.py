@@ -71,3 +71,20 @@ h0mat = get_h0mat(mol, g0_list, nelec, False)
 e0 = get_e0_noci(a, mol, g0_list, nelec, False)
 
 print("Zeroth order NOCI energy:", e0)
+
+lambda0_01, g00_t, g10_t = lowdin_pairing0(g0ghf0, g0ghf1, mol, nelec, False)
+print("lambda0_01:\n", lambda0_01)
+print("overlap matrix:\n", get_s0mat(mol, g0_list, nelec, False))
+print("hamiltonian matrix:\n", h0mat)
+print("un-transformed matrix:\n", g0ghf0)
+print("transformed matrix:\n", g00_t)
+
+g01 = g1_iteration(False, mol, atom, coord, nelec, g0ghf0)
+g01_t = g1_iteration(False, mol, atom, coord, nelec, g00_t)
+print("un-transformed derivative matrix:\n", g01)
+print("transformed derivative matrix:\n", g01_t)
+
+e1 = get_e1_elec(mol, g01, atom, coord, False, nelec)
+e1_t = get_e1_elec(mol, g01_t, atom, coord, False, nelec)
+print("e1:\n", e1)
+print("e1_t:\n", e1_t)

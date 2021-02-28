@@ -385,9 +385,9 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
             gw0 = g0_list[w]
             gx0 = g0_list[x]
-            gw0_t, gx0_t = transform_g(gw0, gx0, mol, nelec, complexsymmetric)
 
-            wxlambda0 = get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric)
+            wxlambda0, gw0_t, gx0_t = lowdin_pairing0(gw0, gx0, mol, nelec,
+                                                      complexsymmetric)
 
             onewx0 = get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec,
                                 complexsymmetric)
@@ -397,8 +397,8 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
             h0mat[w,x] = onewx0 + twowx0 + nucwx0
 
-            print(w, x)
-            print("two electron:", twowx0)
+            # print(w, x)
+            # print("two electron:", twowx0)
 
     return h0mat
 
@@ -436,14 +436,13 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
             gx0 = g0_list[x]
             gw1 = g1_list[w]
             gx1 = g1_list[x]
-            gw0_t, gx0_t = transform_g(gw0, gx0, mol, nelec, complexsymmetric)
+            wxlambda0, gw0_t, gx0_t = lowdin_pairing0(gw0, gx0, mol, nelec,
+                                                      complexsymmetric)
             gw1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
                                  gw0_t)
             gx1_t = g1_iteration(complexsymmetric, mol, atom, coord, nelec,
                                  gx0_t)
 
-
-            wxlambda0 = get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric)
             wxlambda1 = get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord,
                                       nelec, complexsymmetric)
 
