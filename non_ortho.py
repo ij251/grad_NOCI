@@ -4,7 +4,7 @@ from first_order_ghf import *
 from zeroth_order_ghf import *
 
 
-def get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric: bool):
+def lowdin_pairing0(gw0, gx0, mol, nelec, complexsymmetric: bool):
 
     r"""Calculates the zeroth order diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -26,6 +26,22 @@ def get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric: bool):
             = \mathbf{\prescript{w}{}G}^{\dagger\diamond}\
               \mathbf{S}_{\mathrm{AO}}\ \mathbf{\prescript{x}{}G}
 
+    The coefficient matrices are then transformed according to:
+
+    .. math::
+
+            \prescript{w}{}{\tilde{\mathbf{G}}}
+            = \prescript{w}{}{\mathbf{G}}
+            \prescript{wx}{}{\mathbf{U}}^{\diamond}
+
+    and
+
+    .. math::
+
+            \prescript{x}{}{\tilde{\mathbf{G}}}
+            = \prescript{x}{}{\mathbf{G}}
+            \prescript{wx}{}{\mathbf{V}}
+
     :param gw0: The zeroth order molecular orbital coefficient matrix of the
             wth determinant.
     :param gx0: The zeroth order molecular orbital coefficient matrix of the
@@ -35,8 +51,9 @@ def get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric: bool):
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
             If :const:'False', :math:'\diamond = \hat{e}'.
 
-    :returns: Diagonal matrix of singular values for pair of determinants w
-            and x.
+    :returns: list: Diagonal matrix of Löwdin overlaps, transformed MO
+            coefficient for w determinant, transformed MO coefficient for x
+            determinant.
     """
 
     sao0 = mol.intor("int1e_ovlp")
@@ -44,32 +61,43 @@ def get_wxlambda0(gw0, gx0, mol, nelec, complexsymmetric: bool):
     sao0 = np.kron(omega, sao0)
     if not complexsymmetric:
         wxs0 = np.linalg.multi_dot([gw0[:, 0:nelec].T.conj(), sao0,
-                                    gx0[:, 0:nelec]])
+                                    gx0[:, 0:nelec]]) #Only occ orbitals
     else:
         wxs0 = np.linalg.multi_dot([gw0[:, 0:nelec].T, sao0,
                                     gx0[:, 0:nelec]])
 
-    wxu,_,wxvh = np.linalg.svd(wxs0)
+    wxu,wxlambda0,wxvh = np.linalg.svd(wxs0)
     wxv = wxvh.T.conj()
+    wxlambda0 = np.diag(wxlambda0)
+    det_wxu = np.linalg.det(wxu)
+    det_wxv = np.linalg.det(wxv)
 
     assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
                        rtol = 1.e-5, atol = 1.e-8)
     assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
                        rtol = 1.e-5, atol = 1.e-8)
 
-    # print("wxs0, overlap between MOs of the determinants\n", wxs0)
-    # print("wx U matrix:\n", wxu, "\nwx V matrix:\n", wxv)
+    if not complexsymmetric:
+        gw0_t = np.dot(gw0[:,0:nelec], wxu)
+    else:
+        gw0_t = np.dot(gw0[:,0:nelec], wxu.conj())
 
-    wxlambda0 = np.linalg.multi_dot([wxu.T.conj(), wxs0, wxv])
+    gx0_t = np.dot(gx0[:,0:nelec], wxv)
 
-    return wxlambda0
+    gw0_t[:,0] *= det_wxu.conj() #Removes phase induced by unitary transform
+    gx0_t[:,0] *= det_wxv.conj()
+
+    gw0_t = np.append(gw0_t, gw0[:,nelec:], axis=1) #Adds virtual block back
+    gx0_t = np.append(gx0_t, gw0[:,nelec:], axis=1)
+
+    return wxlambda0, gw0_t, gx0_t
 
 
 def get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord, nelec,
                   complexsymmetric: bool):
 
     r"""Calculates the first order diagonal matrix of singular values from
-    differentiating the dingular value decomposition:
+    differentiating the singular value decomposition:
 
     .. math::
 
@@ -204,69 +232,6 @@ def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
                             g0_list[i]) for i in range(len(g0_list))]
 
     return g1_list
-
-
-def transform_g(gw0, gx0, mol, nelec, complexsymmetric: bool):
-
-    r"""Uses a Löwdin transformation to bi-orthogonalise a pair of MO
-    coefficient matrices and return their transformed forms, given by:
-
-    .. math::
-
-            \prescript{w}{}{\tilde{\mathbf{G}}}
-            = \prescript{w}{}{\mathbf{G}}
-            \prescript{wx}{}{\mathbf{U}}^{\diamond}
-
-    and
-
-    .. math::
-
-            \prescript{x}{}{\tilde{\mathbf{G}}}
-            = \prescript{x}{}{\mathbf{G}}
-            \prescript{wx}{}{\mathbf{V}}
-
-    :param gw0: The zeroth order molecular orbital coefficient matrix of the
-            wth determinant.
-    :param gx0: The zeroth order molecular orbital coefficient matrix of the
-            xth determinant.
-    :param mol: The pyscf molecule class, from which the nuclear coordinates
-            and atomic numbers are taken.
-    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
-            If :const:'False', :math:'\diamond = \hat{e}'.
-
-    :returns: Both the transformed MO coefficient matrices for the w and x
-            determiants.
-    """
-
-    sao0 = mol.intor("int1e_ovlp")
-    omega = np.identity(2)
-    sao0 = np.kron(omega, sao0)
-    if not complexsymmetric:
-        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T.conj(), sao0,
-                                    gx0[:,0:nelec]])
-    else:
-        wxs0 = np.linalg.multi_dot([gw0[:,0:nelec].T, sao0,
-                                    gx0[:,0:nelec]])
-
-    wxu,_,wxvh = np.linalg.svd(wxs0)
-    wxv = wxvh.T.conj()
-    det_wxu = np.linalg.det(wxu)
-    det_wxv = np.linalg.det(wxv)
-
-    if not complexsymmetric:
-        gw0_t = np.dot(gw0[:,0:nelec], wxu)
-    else:
-        gw0_t = np.dot(gw0[:,0:nelec], wxu.conj())
-
-    gx0_t = np.dot(gx0[:,0:nelec], wxv)
-
-    gw0_t[:,0] *= det_wxu.conj()
-    gx0_t[:,0] *= det_wxv.conj()
-
-    # print(wxu)
-    # print(det_wxu)
-
-    return gw0_t, gx0_t
 
 
 def get_xwp0(gw0_t, gx0_t, orbital_num, complexsymmetric: bool):
