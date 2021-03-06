@@ -103,6 +103,7 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     :returns: Matrix of overlap derivatives.
     """
     g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
+    print(g1_list)
     nnoci = len(g0_list)
     s1mat = np.zeros((nnoci,nnoci))
 
