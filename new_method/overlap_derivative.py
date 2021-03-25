@@ -52,6 +52,58 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     return s0mat
 
 
+def get_sao1_partial(mol, atom, coord):
+
+    r"""Function gives the overlap tensors where the bra or the ket contains
+    differentiated AO basis functions, as needed to calculate terms B and D of
+    the first order overlap between determinants in the theory.
+
+    .. math::
+
+            \left(\mathbf{S}_{\mathrm{bra}}^{(1)}\right)_{\mu\nu}
+            = \left(\phi^{(1)}_{\cdot \mu}\Big|\phi^{(0)}_{\cdot \nu}\right)\\
+
+            \left(\mathbf{S}_{\mathrm{ket}}^{(1)}\right)_{\mu\nu}
+            = \left(\phi^{(0)}_{\cdot \mu}\Big|\phi^{(1)}_{\cdot \nu}\right)
+
+    :param mol: Molecule class as defined by PySCF.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+
+    :returns: Two matrices, the first of which has the bra differentiated and
+            the second the ket.
+    """
+
+    sao0 =  mol.intor("int1e_ovlp")
+    onee = -mol.intor("int1e_ipovlp") #minus sign due to pyscf definition
+    s1_bra = np.zeros_like(sao0)
+    s1_ket = np.zeros_like(sao0)
+
+    for i in range(sao0.shape[1]):
+
+        atoms_i = int(i in range(mol.aoslice_by_atom()[atom][2],
+                                  mol.aoslice_by_atom()[atom][3]))
+
+        for j in range(sao0.shape[1]):
+
+            atoms_j = int(j in range(mol.aoslice_by_atom()[atom][2],
+                                      mol.aoslice_by_atom()[atom][3]))
+
+            s1_bra[i][j] += onee[coord][i][j]*atoms_i
+            s1_ket[i][j] += onee[coord][j][i]*atoms_j
+
+    omega = np.identity(2)
+    s1_bra = np.kron(omega, s1_bra)
+    s1_ket = np.kron(omega, s1_ket)
+
+    return s1_bra, s1_ket
+
+
 def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
              complexsymmetric)
 

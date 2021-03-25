@@ -6,6 +6,35 @@ from non_ortho import *
 from overlap_derivative import *
 
 
+def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
+
+    r"""Converts a list of zeroth order molecular orbital coefficient matrices
+    to a list of first order molecular orbital coefficient matrices.
+
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+    :param g0_list: Python list of molecular orbital coefficient matrices.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+
+    :returns: Python list of first order MO coefficient matrices.
+    """
+
+    g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
+                            g0_list[i]) for i in range(len(g0_list))]
+
+    return g1_list
+
+
 def get_hcore1_operator(mf, mol=None):
 
     r"""Function to get the matrix element of the hcore derivative containing
@@ -49,6 +78,97 @@ def get_hcore1_operator(mf, mol=None):
             return vrinv + vrinv.transpose(0,2,1)
 
     return hcore_deriv
+
+
+def get_j1_partial(mol, atom coord):
+
+    r"""Function gets the 4th order two electron integral tensors where one
+    of each of the 4 positions (bra0,bra1|ket0,ket1) contains differentiated
+    AO basis functions, as needed to calculate terms B and D of the first
+    order two electron contribution to the hamiltonian matrix element.
+
+    .. math::
+
+            \left(\mathbf{j}_{\mathrm{bra}_0}^{(1)}\right)_{\mu\mu'\nu\nu'}
+            = \left(\phi^{(1)}_{\mu}\phi^{(0)}_{\mu'}|
+              \phi^{(0)}_{\nu}\phi^{(0)}_{\nu'}\right)\\
+
+            \left(\mathbf{j}_{\mathrm{bra}_1}^{(1)}\right)_{\mu\mu'\nu\nu'}
+            = \left(\phi^{(0)}_{\mu}\phi^{(1)}_{\mu'}|
+              \phi^{(0)}_{\nu}\phi^{(0)}_{\nu'}\right)
+
+             \left(\mathbf{j}_{\mathrm{ket}_0}^{(1)}\right)_{\mu\mu'\nu\nu'}
+             = \left(\phi^{(0)}_{\mu}\phi^{(0)}_{\mu'}|
+               \phi^{(1)}_{\nu}\phi^{(0)}_{\nu'}\right)
+
+             \left(\mathbf{j}_{\mathrm{ket}_1}^{(1)}\right)_{\mu\mu'\nu\nu'}
+             = \left(\phi^{(0)}_{\mu}\phi^{(0)}_{\mu'}|
+               \phi^{(0)}_{\nu}\phi^{(1)}_{\nu'}\right)
+
+    :param mol: Molecule class as defined by PySCF.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+
+    :returns: 4 tensors, the first of which has bra0 differentiated, the
+            second bra1, the third ket0 and the fourth ket1.
+    """
+
+    omega = np.identity(2)
+    spin_j = np.einsum("ij,kl->ikjl", omega, omega)
+
+    twoe = -mol.intor("int2e_ip1")[coord] #minus sign due to pyscf definition
+
+    j1_bra0 = np.zeros_like(twoe)
+    j1_bra1 = np.zeros_like(twoe)
+    j1_ket0 = np.zeros_like(twoe)
+    j1_ket1 = np.zeros_like(twoe)
+
+    for i in range(twoe.shape[0]):
+
+        atoms_i = int(i in range(mol.aoslice_by_atom()[atom][2],
+                                  mol.aoslice_by_atom()[atom][3]))
+
+        for j in range(twoe.shape[0]):
+
+            atoms_j = int(j in range(mol.aoslice_by_atom()[atom][2],
+                                      mol.aoslice_by_atom()[atom][3]))
+
+            for k in range(twoe.shape[0]):
+
+                atoms_k = int(k in range(mol.aoslice_by_atom()[atom][2],
+                                          mol.aoslice_by_atom()[atom][3]))
+
+                for l in range(twoe.shape[0]):
+
+                    atoms_l = int(l in range(mol.aoslice_by_atom()[atom][2],
+                                              mol.aoslice_by_atom()[atom][3]))
+
+                    j1_bra0[i][j][k][l] += twoe[i][j][k][l] * atoms_i
+                    j1_bra1[i][j][k][l] += twoe[j][i][k][l] * atoms_j
+                    j1_ket0[i][j][k][l] += twoe[k][l][i][j] * atoms_k
+                    j1_ket1[i][j][k][l] += twoe[l][k][i][j] * atoms_l
+
+
+    j1_bra0 = np.einsum("abcd->acbd", j1_bra0,
+                        optimize='optimal') #convert to physicists
+    j1_bra1 = np.einsum("abcd->acbd", j1_bra1,
+                        optimize='optimal') #convert to physicists
+    j1_ket0 = np.einsum("abcd->acbd", j1_ket0,
+                        optimize='optimal') #convert to physicists
+    j1_ket1 = np.einsum("abcd->acbd", j1_ket1,
+                        optimize='optimal') #convert to physicists
+
+    j1_bra0 = np.kron(spin_j, j1_bra0)
+    j1_bra1 = np.kron(spin_j, j1_bra1)
+    j1_ket0 = np.kron(spin_j, j1_ket0)
+    j1_ket1 = np.kron(spin_j, j1_ket1)
+
+    return j1_bra0, j1_bra1, j1_ket0, j1_ket1
 
 
 def get_onewx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec,
