@@ -46,12 +46,83 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = lowdin_pairing0(g0_list[w], g0_list[x], mol,
+            wxlambda0 = lowdin_pairing(g0_list[w], g0_list[x], mol,
                                       nelec, complexsymmetric)[0]
 
             s0mat[w,x] += lowdin_prod(wxlambda0, [])
 
     return s0mat
+
+
+def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
+             complexsymmetric)
+
+    r"""Finds the derivative of the overlap between elements w and x by first
+    expanding spin orbitals to first order then lowdin pairing.
+
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+    :param w_g0: The zeroth order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g0: The zeroth order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param w_g1: The first order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g1: The first order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+
+    :returns: single value swx1 for overlap derivative.
+    """
+
+    sao0 = mol.intor("int1e_ovlp")
+    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
+
+    swx1 = 0
+
+    for p in range(nelec):
+
+        wp_g01 = w_g0
+        wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
+        wpxlambda01,_,_ = lowdin_pairing(wp_g01, x_g0, mol, nelec,
+                                        complexsymmetric)
+
+        swpx01 = lowdin_prod(wpxlambda01, []) #Term A
+
+        wpxsao10 = sao0
+        wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
+        wpxlambda10,_,_ = lowdin_pairing(w_g0, x_g0, wpxsao10, mol, nelec,
+                                      complexsymmetric)
+
+        swpx10 = lowdin_prod(wpxlambda10, []) #Term B
+
+        wxpsao10 = sao0
+        wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
+        wxplambda10,_,_ = lowdin_pairing(w_g0, x_g0, wxpsao10, mol, nelec,
+                                      complexsymmetric)
+
+        swxp10 = lowdin_prod(wxplambda10, []) #Term D
+
+        xp_g01 = x_g0
+        xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
+        wxplambda01,_,_ = lowdin_pairing(w_g0, xp_g01, mol, nelec,
+                                        complexsymmetric)
+
+        swxp01 = lowdin_prod(wxplambda01, []) #Term E
+
+        swx1 += (swpx01 + swpx10 + swxp10 + swxp01)
+
+    return swx1
 
 
 def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
@@ -80,50 +151,17 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
     nnoci = len(g0_list)
 
-    sao0 = mol.intor("int1e_ovlp")
-    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
-
-
     s1mat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
         for x in range(nnoci):
 
-            gw0 = g0_list[w]
-            gx0 = g0_list[x]
-            gw1 = g1_list[w]
-            gx1 = g1_list[x]
+            w_g0 = g0_list[w]
+            x_g0 = g0_list[x]
+            w_g1 = g1_list[w]
+            x_g1 = g1_list[x]
 
-            for p in range(nelec):
-
-                gwp01 = gw0
-                gwp01[:,p] = gw1[:,p] #Replace pth gw0 column with gw1
-                wpxlambda01,_,_ = lowdin_pairing0(gwp01, gx0, mol, nelec,
-                                                complexsymmetric)
-
-                a_p = lowdin_prod(wpxlambda01, [])
-
-                wpxsao10 = sao0
-                wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
-                wpxlambda10 = lowdin_pairing0(gw0, gx0, wpxsao10, mol, nelec,
-                                              complexsymmetric)
-
-                b_p = lowdin_prod(wpxlambda10, [])
-
-                wxpsao10 = sao0
-                wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
-                wxplambda10 = lowdin_pairing0(gw0, gx0, wxpsao10, mol, nelec,
-                                              complexsymmetric)
-
-                d_p = lowdin_prod(wxplambda10, [])
-
-                gxp01 = gx0
-                gxp01[:,p] = gx1[:,p] #Replace pth gw0 column with gw1
-                wxplambda01,_,_ = lowdin_pairing0(gw0, gxp01, mol, nelec,
-                                                complexsymmetric)
-
-                e_p = lowdin_prod(wxplambda01, [])
-
-                s1mat[w,x] += a_p + b_p + d_p + e_p
+            s1mat[w,x] = get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
+                                  nelec complexsymmetric)
 
     return s1mat
