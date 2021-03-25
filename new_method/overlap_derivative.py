@@ -5,9 +5,9 @@ from zeroth_order_ghf import *
 from non_ortho import *
 
 
-def get_swx0(wxlambda0, nelec):
+def get_swx0(wxlambda0):
 
-    r"""Calculates te overlap between deteminants w and x.
+    r"""Calculates the overlap between deteminants w and x.
 
     .. math::
 
@@ -15,8 +15,6 @@ def get_swx0(wxlambda0, nelec):
 
     :param wxlambda0: Diagonal matrix of Löwdin singular values for the wth
             and xth determinant.
-    :param nelec: The number of electrons in the molecule, determines which
-            orbitals are occupied and virtual.
     """
 
     swx0 = lowdin_prod(wxlambda0, [])
@@ -37,7 +35,7 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
             If :const:'False', :math:'\diamond = \hat{e}'.
 
-    :returns: Matrix of overlaps between determinants. 
+    :returns: Matrix of overlaps between determinants.
     """
 
     nnoci = len(g0_list)
@@ -47,9 +45,9 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
         for x in range(nnoci):
 
             wxlambda0 = lowdin_pairing(g0_list[w], g0_list[x], mol,
-                                      nelec, complexsymmetric)[0]
+                                       nelec, complexsymmetric)[0]
 
-            s0mat[w,x] += lowdin_prod(wxlambda0, [])
+            s0mat[w,x] += get_swx0(wxlambda0)
 
     return s0mat
 
@@ -59,6 +57,32 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
 
     r"""Finds the derivative of the overlap between elements w and x by first
     expanding spin orbitals to first order then lowdin pairing.
+
+    Terms A and E are due to the part of the first order spin orbitals which
+    are zeroth order AO basis functions expanded using first order MO
+    coefficients. We define :math:'^{w_p x}\Psi^{01}' and
+    :math:'^{w x_p}\Psi^{01}'determinants where the the pth column
+    of the zeroth order MO coefficient matrix has been replaced with the pth
+    column of the first order MO coefficient matrix then Lowdin pair.
+
+    Terms B and D are due to the part of the first order spin orbitals which
+    are first order AO basis functions expanded using zeroth order MO
+    coefficients. This is achieved by defining modified atomic orbital overlap
+    matrices in which the pth row or column has been replaced by the
+    corresponding overlap where either the bra or ket AO function has been
+    differentiated, and using these overlap matrices in Lowdin pairing with
+    the zeroth order MO coefficient matrices.
+
+    Term C does not contribute to the overlap.
+
+    In each case once Lowdin pairing is done overlap can be found as:
+
+    .. math::
+
+            S_{wx} = \prod\limits_i^{N_e}\prescript{wx}{}\lambda_i
+
+    for each term and each p in a sum over p from 1 to the number of
+    electrons.
 
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.

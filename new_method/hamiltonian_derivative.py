@@ -5,9 +5,10 @@ from zeroth_order_ghf import *
 from non_ortho import *
 from overlap_derivative import *
 
+
 def get_hcore1_operator(mf, mol=None):
 
-    """Function to get the matrix element of the hcore derivative containing
+    r"""Function to get the matrix element of the hcore derivative containing
     just the contribution from the operator derivative and not that of the
     basis functions.
 
@@ -88,7 +89,7 @@ def get_onewx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec,
     for m in range(nelec):
 
         lowdin_prod0 = lowdin_prod(wxlambda0, [m])
-        xw_p0 = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+        xw_p0 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
         onewx0 += lowdin_prod0 * np.einsum("ij,ji->", hcore0, xw_p0)
 
@@ -99,8 +100,47 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                complexsymmetric: bool):
 
     r"""Calculates the first order one electron contribution to the
-    hamiltonian element between determinants w and x using the new
-    formulation. Terms A-E here are defined as in the theory.
+    hamiltonian element between determinants w and x by first expanding
+    spin orbitals to first order then lowdin pairing to simplify and
+    calculate matrix element.
+
+    .. math::
+
+            \sum\limits_{m=1}^{N_e}\langle\prescript{w}{}\Psi
+            |\hat{h}(\mathbf{r}_m)|\prescript{x}{}\Psi\rangle
+            =  h_{\delta\mu, \gamma\nu}\sum\limits_{m=1}^{N_e}
+            \left(\prod\limits_{i\not =m}^{N_e}
+            \prescript{wx}{}\lambda_{i}\right)
+            \prescript{xw}{}P_m^{\gamma\nu, \delta\mu}
+
+    Terms A and E are due to the part of the first order spin orbitals which
+    are zeroth order AO basis functions expanded using first order MO
+    coefficients. We define :math:'^{w_p x}\Psi^{01}' and
+    :math:'^{w x_p}\Psi^{01}'determinants where the the pth column
+    of the zeroth order MO coefficient matrix has been replaced with the pth
+    column of the first order MO coefficient matrix then Lowdin pair.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p in a sum over p from 1 to the number of
+    electrons.
+
+    Terms B and D are due to the part of the first order spin orbitals which
+    are first order AO basis functions expanded using zeroth order MO
+    coefficients. This is achieved by defining modified atomic orbital overlap
+    matrices in which a row or column has been replaced by the corresponding
+    overlap where either the bra or ket AO function has been differentiated,
+    and using these overlap matrices in Lowdin pairing with the zeroth order
+    MO coefficient matrices.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p, except we must now consider that the pth spin
+    orbital is expanded in first order AO basis functions, so for the m=p term
+    in the sum over m the zeroth order core hamiltonian matrix is replaced
+    with the matrix in which either the bra or ket of each element has been
+    differentiated.
+
+    Term C does contribute here because the operator is a function of nuclear
+    coordinate, and this is found as above (no sum over p) but replacing the
+    zeroth order core hamiltonian matrix with the matrix in which the operator
+    has been differentiated.
 
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.
@@ -151,7 +191,7 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                            complexsymmetric
                                                            )
             wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m])
-            xwp_p01 = get_xw_p0(wp_g01_t, x_g0_t, m, complexsymmetric)
+            xwp_p01 = get_xw_p(wp_g01_t, x_g0_t, m, complexsymmetric)
 
             onewpx01 += wpxlowdin_prod01 * np.einsum("ij,ji->", hcore0,
                                                      xwp_p01)
@@ -164,7 +204,7 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                         nelec,
                                                         complexsymmetric)
             wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m])
-            xwp_p10 = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+            xwp_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
             if m == p:
                 onewpx10 += wpxlowdin_prod10 * np.einsum("ij,ji->",
@@ -183,7 +223,7 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                         nelec,
                                                         complexsymmetric)
             wxplowdin_prod10 = lowdin_prod(wxplambda10, [m])
-            xpw_p10 = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+            xpw_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
             if m == p:
                 onewxp10 += wxplowdin_prod10 * np.einsum("ij,ji->",
@@ -202,7 +242,7 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                           complexsymmetric
                                                           )
             wxplowdin_prod01 = lowdin_prod(wxplambda01, [m])
-            xpw_p01 = get_xw_p0(w_g0_t, xp_g01_t, m, complexsymmetric)
+            xpw_p01 = get_xw_p(w_g0_t, xp_g01_t, m, complexsymmetric)
 
             onewxp01 += wxplowdin_prod01 * np.einsum("ij,ji->", hcore0,
                                                      xpw_p01)
@@ -216,7 +256,7 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     for m in range(nelec):
 
         lowdin_prod0 = lowdin_prod(wxlambda0, [m])
-        xw_p0 = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+        xw_p0 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
         onewx010 += lowdin_prod0 * np.einsum("ij,ji->", hcore1_op, xw_p0)
 
@@ -266,8 +306,8 @@ def get_twowx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec, complexsymmetric: bool):
                 continue
 
             lowdin_prod0 = lowdin_prod(wxlambda0, [m,n])
-            xw_p0_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
-            xw_p0_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
+            xw_p0_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
+            xw_p0_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
 
             twowx0 += lowdin_prod0 * (np.einsum("ijkl,ji,lk->",
                                                 j0,xw_p0_m,xw_p0_n)
@@ -281,9 +321,46 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                complexsymmetric: bool):
 
     r"""Calculates the first order two electron contribution to the
-    hamiltonian element between determinants w and x using the new
-    formulation. Terms A-E here are defined as in the theory. There
-    is no term C contribution for the two electron operator.
+    hamiltonian element between determinants w and x by first expanding
+    spin orbitals to first order then lowdin pairing to simplify and
+    calculate matrix element.
+
+    .. math::
+
+            \frac{1}{2}(\delta\mu,\gamma\nu|\delta'\mu',\gamma'\nu')
+            \sum\limits_m^{N_e}\sum\limits_{n}^{N_e} \left(
+            \prod\limits_{i\not =m,n}^{N_e}\prescript{wx}{}\lambda_{i}\right)
+            \left[ \prescript{xw}{}P_m^{\gamma\nu, \delta\mu}
+            \prescript{xw}{}P_n^{\gamma'\nu', \delta'\mu'} -  \prescript{xw}{}
+            P_m^{\gamma'\nu', \delta\mu} \prescript{xw}{}
+            P_n^{\gamma\nu, \delta'\mu'} \right]
+
+    Terms A and E are due to the part of the first order spin orbitals which
+    are zeroth order AO basis functions expanded using first order MO
+    coefficients. We define :math:'^{w_p x}\Psi^{01}' and
+    :math:'^{w x_p}\Psi^{01}'determinants where the the pth column
+    of the zeroth order MO coefficient matrix has been replaced with the pth
+    column of the first order MO coefficient matrix then Lowdin pair.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p in a sum over p from 1 to the number of
+    electrons.
+
+    Terms B and D are due to the part of the first order spin orbitals which
+    are first order AO basis functions expanded using zeroth order MO
+    coefficients. This is achieved by defining modified atomic orbital overlap
+    matrices in which a row or column has been replaced by the corresponding
+    overlap where either the bra or ket AO function has been differentiated,
+    and using these overlap matrices in Lowdin pairing with the zeroth order
+    MO coefficient matrices.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p, except we must now consider that the pth spin
+    orbital is expanded in first order AO basis functions, so for the m=p and
+    n=p terms in the sums over m and n the zeroth order two electron integral
+    coulomb tensor has been replaced by the tensor in which either of the
+    two AO functions in the bra or either of the two in the ket has been
+    differentiated.
+
+    Term C does not contribute to the two electron term.
 
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.
@@ -318,15 +395,6 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
 
     twowx1 = 0
 
-            lowdin_prod0 = lowdin_prod(wxlambda0, [m,n])
-            xw_p0_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
-            xw_p0_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
-
-            twowx0 += lowdin_prod0 * (np.einsum("ijkl,ji,lk->",
-                                                j0,xw_p0_m,xw_p0_n)
-                                      - np.einsum("ijkl,li,jk->",
-                                                  j0,xw_p0_m,xw_p0_n)) * 0.5
-
     for p in range(nelec):
 
         twowpx01 = 0 #Term A
@@ -347,8 +415,8 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                              mol, nelec,
                                                              complexsymmetric)
                 wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m,n])
-                xwp_p01_m = get_xw_p0(wp_g01_t, x_g0_t, m, complexsymmetric)
-                xwp_p01_n = get_xw_p0(wp_g01_t, x_g0_t, n, complexsymmetric)
+                xwp_p01_m = get_xw_p(wp_g01_t, x_g0_t, m, complexsymmetric)
+                xwp_p01_n = get_xw_p(wp_g01_t, x_g0_t, n, complexsymmetric)
 
                 twowpx01 += (wpxlowdin_prod01*0.5*
                              (np.einsum("ijkl,ji,lk->",
@@ -364,8 +432,8 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                             nelec,
                                                             complexsymmetric)
                 wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m,n])
-                xwp_p10_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
-                xwp_p10_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
+                xwp_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
+                xwp_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
 
                 if m == p:
                     twowpx10 += (wpxlowdin_prod10*0.5*
@@ -394,8 +462,8 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                             nelec,
                                                             complexsymmetric)
                 wxplowdin_prod10 = lowdin_prod(wxplambda10, [m,n])
-                xpw_p10_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
-                xpw_p10_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
+                xpw_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
+                xpw_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
 
                 if m == p:
                     twowxp10 += (wxplowdin_prod10*0.5*
@@ -423,8 +491,8 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                              mol, nelec,
                                                              complexsymmetric)
                 wxplowdin_prod01 = lowdin_prod(wxplambda01, [m,n])
-                xpw_p01_m = get_xw_p0(w_g0_t, xp_g01_t, m, complexsymmetric)
-                xpw_p01_n = get_xw_p0(w_g0_t, xp_g01_t, n, complexsymmetric)
+                xpw_p01_m = get_xw_p(w_g0_t, xp_g01_t, m, complexsymmetric)
+                xpw_p01_n = get_xw_p(w_g0_t, xp_g01_t, n, complexsymmetric)
 
                 twowxp01 += (wxplowdin_prod01*0.5*
                              (np.einsum("ijkl,ji,lk->",
@@ -469,14 +537,12 @@ def get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
                complexsymmetric: bool):
 
     r"""Calculates the first order nuclear repulsion contribution to the
-    hamiltonian element between determinants w and x.
+    hamiltonian element between determinants w and x. Requires the first order
+    overlap and the first order nuclear repulsion operator.
 
     .. math::
 
-            \frac{\partial}{\partial X_A}\left[\langle\prescript{w}{}\Psi|
-            \prescript{x}{}\Psi\rangle\sum\limits_{A>B}^N\frac{Z_AZ_B}{R_{AB}}
-            \right]
-            = \frac{\partial S_{wx}}{\partial X_A}\sum\limits_{A>B}^N
+            \frac{\partial S_{wx}}{\partial X_A}\sum\limits_{A>B}^N
             \frac{Z_AZ_B}{R_{AB}} + S_{wx}\sum\limits_{B \neq A}^N
             \left(X_B-X_A\right)\frac{Z_AZ_B}{R^3_{AB}}
 
@@ -588,10 +654,10 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
             w_g1 = g1_list[w]
             x_g1 = g1_list[x]
 
-            onewx1 = get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
-                                complexsymmetric)
-            twowx1 = get_wx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
-                                complexsymmetric)
+            onewx1 = get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
+                                nelec, complexsymmetric)
+            twowx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
+                                nelec, complexsymmetric)
             nucwx1 = get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
                                 complexsymmetric)
 
