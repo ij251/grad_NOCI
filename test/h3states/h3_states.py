@@ -53,7 +53,7 @@ g0beta3 = np.loadtxt("h3states/state3_b")
 
 ''' First index is the state number, second is the order'''
 
-class h3_states:
+class h3_states4:
     mol = gto.M(
             atom = (
                 f"H 0 0 0;"
@@ -75,3 +75,22 @@ class h3_states:
     g20 = uhf_to_ghf(g0alpha2, g0beta2, nalpha, nbeta) #energy = -0.6995970325
     g30 = uhf_to_ghf(g0alpha3, g0beta3, nalpha, nbeta) #energy = -0.6985647926
 
+class h3_states2:
+    mol = gto.M(
+            atom = (
+                f"H 0 0 0;"
+                f"H 0 0 2;"
+                f"H 0 1 0;"
+            ),
+            basis = 'sto-3g',
+            unit = 'Bohr',
+            charge = 0,
+            spin = 1)
+    nelec = 3
+    nalpha = 2
+    nbeta = 1
+    atom = 1
+    coord = 2
+    a = [0.9985121, 0.0545969]
+    g00 = uhf_to_ghf(g0alpha0, g0beta0, nalpha, nbeta) #energy = -1.4222053120
+    g10 = uhf_to_ghf(g0alpha1, g0beta1, nalpha, nbeta) #energy = 0.9899506826
