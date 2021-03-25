@@ -262,6 +262,9 @@ def get_twowx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec, complexsymmetric: bool):
     for m in range(nelec):
         for n in range(nelec):
 
+            if n == m:
+                continue
+
             lowdin_prod0 = lowdin_prod(wxlambda0, [m,n])
             xw_p0_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
             xw_p0_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
@@ -274,43 +277,13 @@ def get_twowx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec, complexsymmetric: bool):
     return twowx0
 
 
-def get_twowx1(mol, atom, coord, w_g0_t, x_g0_t, w_g1_t, x_g1_t, wxlambda0,
-               wxlambda1, nelec, complexsymmetric: bool):
+def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
+               complexsymmetric: bool):
 
     r"""Calculates the first order two electron contribution to the
-    hamiltonian element between determinants w and x.
-
-    .. math::
-
-            \frac{1}{2}\frac{\partial}{\partial X_A}\sum\limits_m^{N_e}
-            \sum\limits_{n \not =m}^{N_e}\langle\prescript{w}{}\Psi
-            |\hat{r}_{mn}^{-1}|\prescript{x}{}\Psi\rangle
-            = \frac{1}{2}\frac{\partial (\delta\mu,\gamma\nu|\delta'\mu',\
-            gamma'\nu')}{\partial X_A}\sum\limits_m^{N_e}\sum\limits_{n}^{N_e}
-            \left(\prod\limits_{i\not =m,n}^{N_e}\prescript{wx}{}\lambda_{i}
-            \right) \left[ \prescript{xw}{}P_m^{\gamma\nu, \delta\mu}
-            \prescript{xw}{}P_n^{\gamma'\nu', \delta'\mu'} -  \prescript{xw}{}
-            P_m^{\gamma'\nu', \delta\mu} \prescript{xw}{}P_n^{\gamma\nu,
-            \delta'\mu'} \right]
-            + \frac{1}{2}(\delta\mu,\gamma\nu|\delta'\mu',\gamma'\nu')
-            \sum\limits_m^{N_e}\sum\limits_{n}^{N_e} \left(
-            \sum \limits_{j \not =m,n}^{N_e} \frac{\partial \prescript{wx}{}
-            \lambda_j}{\partial X_A} \prod\limits_{i\not = j,m,n}^{N_e}
-            \prescript{wx}{}\lambda_i \right) \left[ \prescript{xw}{}
-            P_m^{\gamma\nu, \delta\mu} \prescript{xw}{}P_n^{\gamma'\nu',
-            \delta'\mu'} - \prescript{xw}{}P_m^{\gamma'\nu', \delta\mu}
-            \prescript{xw}{}P_n^{\gamma\nu, \delta'\mu'} \right]
-            + \frac{1}{2}(\delta\mu,\gamma\nu|\delta'\mu',\gamma'\nu')
-            \sum\limits_m^{N_e}\sum\limits_{n}^{N_e} \left(
-            \prod\limits_{i\not =m,n}^{N_e}\prescript{wx}{}\lambda_{i}\right)
-            \Bigg[ \frac{\partial \prescript{xw}{}P_m^{\gamma\nu, \delta\mu}}
-            {\partial X_A}\prescript{xw}{}P_n^{\gamma'\nu', \delta'\mu'}
-            + \prescript{xw}{}P_m^{\gamma\nu, \delta\mu} \frac{\partial
-            \prescript{xw}{}P_n^{\gamma'\nu', \delta'\mu'}}{\partial X_A}
-            - \frac{\partial \prescript{xw}{}P_m^{\gamma'\nu', \delta\mu}}
-            {\partial X_A}\prescript{xw}{}P_n^{\gamma\nu, \delta'\mu'}
-            - \prescript{xw}{}P_m^{\gamma'\nu', \delta\mu} \frac{\partial
-            \prescript{xw}{}P_n^{\gamma\nu, \delta'\mu'}}{\partial X_A}\Bigg]
+    hamiltonian element between determinants w and x using the new
+    formulation. Terms A-E here are defined as in the theory. There
+    is no term C contribution for the two electron operator.
 
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.
@@ -321,18 +294,14 @@ def get_twowx1(mol, atom, coord, w_g0_t, x_g0_t, w_g1_t, x_g1_t, wxlambda0,
             coord = '0' for x
                     '1' for y
                     '2' for z
-    :param w_g0_t: The Löwdin transformed zeroth order molecular orbital
-            coefficient matrix of the wth determinant.
-    :param x_g0_t: The Löwdin transformed zeroth order molecular orbital
-            coefficient matrix of the xth determinant.
+    :param w_g0: The zeroth order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g0: The zeroth order molecular orbital coefficient matrix of the
+            xth determinant.
     :param w_g1: The first order molecular orbital coefficient matrix of the
             wth determinant.
     :param x_g1: The first order molecular orbital coefficient matrix of the
             xth determinant.
-    :param wxlambda0: Diagonal matrix of Löwdin singular values for the wth
-            and xth determinant.
-    :param wxlambda1: Diagonal matrix of first order Löwdin singular values
-            for the wth and xth determinant.
     :param nelec: The number of electrons in the molecule, determines which
             orbitals are occupied and virtual.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
@@ -342,35 +311,128 @@ def get_twowx1(mol, atom, coord, w_g0_t, x_g0_t, w_g1_t, x_g1_t, wxlambda0,
             derivative.
     """
 
+    sao0 = mol.intor("int1e_ovlp")
+    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
     j0 = get_j0(mol)
-    j1 = get_j1(mol, atom, coord)
+    j1_bra0, j1_bra1, j1_ket0, j1_ket1 = get_j1_partial(mol, atom, coord)
 
     twowx1 = 0
-    for m in range(nelec):
-        for n in range(nelec):
-
 
             lowdin_prod0 = lowdin_prod(wxlambda0, [m,n])
-            lowdin_prod1 = (np.sum(wxlambda1[j,j]*lowdin_prod(wxlambda0,
-                                                                   [j,m,n])
-                                  for j in range(nelec))
-                            - wxlambda1[m,m]*lowdin_prod(wxlambda0,[m])
-                            - wxlambda1[n,n]*lowdin_prod(wxlambda0,[n]))
             xw_p0_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
-            xwp1_m = get_xwp1(w_g0_t, x_g0_t, w_g0_t, x_g1_t, m, complexsymmetric)
             xw_p0_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
-            xwp1_n = get_xwp1(w_g0_t, x_g0_t, w_g0_t, x_g1_t, n, complexsymmetric)
 
-            a = lowdin_prod0 * (np.einsum("ijkl,ji,lk->",j1,xw_p0_m,xw_p0_n)
-                                - np.einsum("ijkl,li,jk->",j1,xw_p0_m,xw_p0_n))
-            b = lowdin_prod1 * (np.einsum("ijkl,ji,lk->",j0,xw_p0_m,xw_p0_n)
-                                - np.einsum("ijkl,li,jk->",j0,xw_p0_m,xw_p0_n))
-            c = lowdin_prod0 * (np.einsum("ijkl,ji,lk->",j0,xwp1_m,xw_p0_n)
-                                + np.einsum("ijkl,ji,lk->",j0,xw_p0_m,xwp1_n)
-                                - np.einsum("ijkl,li,jk->",j0,xwp1_m,xw_p0_n)
-                                - np.einsum("ijkl,li,jk->",j0,xw_p0_m,xwp1_n))
+            twowx0 += lowdin_prod0 * (np.einsum("ijkl,ji,lk->",
+                                                j0,xw_p0_m,xw_p0_n)
+                                      - np.einsum("ijkl,li,jk->",
+                                                  j0,xw_p0_m,xw_p0_n)) * 0.5
 
-            twowx1 += 0.5 * (a + b + c)
+    for p in range(nelec):
+
+        twowpx01 = 0 #Term A
+        twowpx10 = 0 #Term B
+        twowxp10 = 0 #Term D
+        twowxp01 = 0 #Term E
+
+        for m in range(nelec):
+            for n in range(nelec):
+
+                if n == m:
+                    continue
+
+                #Term A
+                wp_g01 = w_g0
+                wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
+                wpxlambda01,wp_g01_t,x_g0_t = lowdin_pairing(wp_g01, x_g0,
+                                                             mol, nelec,
+                                                             complexsymmetric)
+                wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m,n])
+                xwp_p01_m = get_xw_p0(wp_g01_t, x_g0_t, m, complexsymmetric)
+                xwp_p01_n = get_xw_p0(wp_g01_t, x_g0_t, n, complexsymmetric)
+
+                twowpx01 += (wpxlowdin_prod01*0.5*
+                             (np.einsum("ijkl,ji,lk->",
+                                        j0,xwp_p01_m,xwp_p01_n)
+                              - np.einsum("ijkl,li,jk->",
+                                          j0,xwp_p01_m,xwp_p01_n)))
+
+                #Term B
+                wpxsao10 = sao0
+                wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
+                wpxlambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
+                                                            wpxsao10, mol,
+                                                            nelec,
+                                                            complexsymmetric)
+                wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m,n])
+                xwp_p10_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+                xwp_p10_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
+
+                if m == p:
+                    twowpx10 += (wpxlowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j1_bra0,xwp_p10_m,xwp_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j1_bra0,xwp_p10_m,xwp_p10_n)))
+                elif n == p:
+                    twowpx10 += (wpxlowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j1_bra1,xwp_p10_m,xwp_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j1_bra1,xwp_p10_m,xwp_p10_n)))
+                else:
+                    twowpx10 += (wpxlowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j0,xwp_p10_m,xwp_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j0,xwp_p10_m,xwp_p10_n)))
+
+                #Term D
+                wxpsao10 = sao0
+                wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
+                wxplambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
+                                                            wxpsao10, mol,
+                                                            nelec,
+                                                            complexsymmetric)
+                wxplowdin_prod10 = lowdin_prod(wxplambda10, [m,n])
+                xpw_p10_m = get_xw_p0(w_g0_t, x_g0_t, m, complexsymmetric)
+                xpw_p10_n = get_xw_p0(w_g0_t, x_g0_t, n, complexsymmetric)
+
+                if m == p:
+                    twowxp10 += (wxplowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j1_ket0,xpw_p10_m,xpw_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j1_ket0,xpw_p10_m,xpw_p10_n)))
+                elif n == p:
+                    twowxp10 += (wxplowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j1_ket1,xpw_p10_m,xpw_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j1_ket1,xpw_p10_m,xpw_p10_n)))
+                else:
+                    twowxp10 += (wxplowdin_prod10*0.5*
+                                 (np.einsum("ijkl,ji,lk->",
+                                            j0,xpw_p10_m,xpw_p10_n)
+                                  - np.einsum("ijkl,li,jk->",
+                                              j0,xpw_p10_m,xpw_p10_n)))
+
+                #Term E
+                xp_g01 = x_g0
+                xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
+                wxplambda01,w_g0_t,xp_g01_t = lowdin_pairing(w_g0, xp_g01,
+                                                             mol, nelec,
+                                                             complexsymmetric)
+                wxplowdin_prod01 = lowdin_prod(wxplambda01, [m,n])
+                xpw_p01_m = get_xw_p0(w_g0_t, xp_g01_t, m, complexsymmetric)
+                xpw_p01_n = get_xw_p0(w_g0_t, xp_g01_t, n, complexsymmetric)
+
+                twowxp01 += (wxplowdin_prod01*0.5*
+                             (np.einsum("ijkl,ji,lk->",
+                                        j0,xpw_p01_m,xpw_p01_n)
+                              - np.einsum("ijkl,li,jk->",
+                                          j0,xpw_p01_m,xpw_p01_n)))
+
+        twowx1 += twowpx01 + twowpx10 + twowxp10 + twowxp01
 
     return twowx1
 
