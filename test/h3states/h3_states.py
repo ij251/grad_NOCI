@@ -18,7 +18,6 @@ g0beta0 = np.loadtxt("h3states/state0_b")
 
 g0alpha1 = np.loadtxt("h3states/state1_a")
 g0beta1 = np.loadtxt("h3states/state1_b")
-
 # g0alpha1 = np.array([[-0.413134, 1.627175, 0.355595],
 #                      [0.993907, -0.175383, 0.507073],
 #                      [-0.538985, -1.528109, 0.342997]])
@@ -94,3 +93,5 @@ class h3_states2:
     a = [0.9985121, 0.0545969]
     g00 = uhf_to_ghf(g0alpha0, g0beta0, nalpha, nbeta) #energy = -1.4222053120
     g10 = uhf_to_ghf(g0alpha1, g0beta1, nalpha, nbeta) #energy = 0.9899506826
+    # g00[:,[2,1]]=g00[:,[1,2]]
+    # g10[:,[2,1]]=g10[:,[1,2]]
