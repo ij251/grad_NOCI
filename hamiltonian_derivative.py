@@ -1,18 +1,73 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import *
-from zeroth_order_ghf import *
-from non_ortho import *
-from overlap_derivative import *
+from zeroth_order_ghf import get_hcore0, get_j0, get_e0_nuc
+from overlap_derivative import get_g1_list, get_swx0, get_sao1_partial,\
+        get_swx1
+from non_ortho import lowdin_pairing, lowdin_prod, get_xw_p
 
 
-def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
+def get_hcore1_op(mol, atom, coord):
 
-    r"""Converts a list of zeroth order molecular orbital coefficient matrices
-    to a list of first order molecular orbital coefficient matrices.
+    r"""Function to get the matrix element of the hcore derivative containing
+    just the contribution from the operator derivative and not that of the
+    basis functions.
 
-    :param mol: The pyscf molecule class, from which the nuclear coordinates
-            and atomic numbers are taken.
+    .. math::
+
+            \left(\mathbf{h}_{\mathrm{op}}^{(1)}\right)_{\mu\nu}
+            = \left(\phi^{(0)}_{\cdot \mu}\left|\hat{\mathbf{h}}^{(1)}\right|
+            \phi^{(0)}_{\cdot \nu}\right)
+
+    Based on a function from PySCF that calculates the full hcore derivative,
+    so to achieve what we want i have set the zeroth order hcore to be zero.
+    """
+
+    with_ecp = mol.has_ecp()
+    if with_ecp:
+        ecp_atoms = set(mol._ecpbas[:,gto.ATOM_OF])
+    else:
+        ecp_atoms = ()
+
+    aoslices = mol.aoslice_by_atom()
+
+    def hcore_deriv(atm_id):
+
+        shl0, shl1, p0, p1 = aoslices[atm_id]
+
+        with mol.with_rinv_at_nucleus(atm_id):
+            vrinv = mol.intor('int1e_iprinv', comp=3) # <\nabla|1/r|>
+            vrinv *= -mol.atom_charge(atm_id)
+            if with_ecp and atm_id in ecp_atoms:
+                vrinv += mol.intor('ECPscalar_iprinv', comp=3)
+
+        return vrinv + vrinv.transpose(0,2,1)
+
+    hcore1_op = hcore_deriv(atom)[coord]
+    omega = np.identity(2)
+
+    hcore1_op = np.kron(omega, hcore1_op)
+
+    return hcore1_op
+
+
+def get_hcore1_partial(mol, atom, coord):
+
+    r"""Function gives the core hamiltonian tensors where the bra or the ket
+    contains differentiated AO basis functions, as needed to calculate terms
+    B and D of the first order one electron hamiltonian element between
+    determinants in the theory.
+
+    .. math::
+
+            \left(\mathbf{h}_{\mathrm{bra}}^{(1)}\right)_{\mu\nu}
+            = \left(\phi^{(1)}_{\cdot \mu}\left|\hat{\mathbf{h}}^{(0)}\right|
+            \phi^{(0)}_{\cdot \nu}\right)
+
+            \left(\mathbf{h}_{\mathrm{ket}}^{(1)}\right)_{\mu\nu}
+            = \left(\phi^{(0)}_{\cdot \mu}\left|\hat{\mathbf{h}}^{(0)}\right|
+            \phi^{(1)}_{\cdot \nu}\right)
+
+    :param mol: Molecule class as defined by PySCF.
     :param atom: Input for which atom is being perturbed, with atoms numbered
             according to the PySCF molecule.
     :param coord: Input for along which coordinate the pertubation of the atom
@@ -20,64 +75,36 @@ def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
             coord = '0' for x
                     '1' for y
                     '2' for z
-    :param g0_list: Python list of molecular orbital coefficient matrices.
-    :param nelec: The number of electrons in the molecule, determines which
-            orbitals are occupied and virtual.
-    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
-            If :const:'False', :math:'\diamond = \hat{e}'.
 
-    :returns: Python list of first order MO coefficient matrices.
+    :returns: Two matrices, the first of which has the bra differentiated and
+            the second the ket.
     """
 
-    g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
-                            g0_list[i]) for i in range(len(g0_list))]
+    hcore_py = -(mol.intor('int1e_ipnuc')
+                 + mol.intor('int1e_ipkin'))[coord]
+    #minus sign due to pyscf definition
 
-    return g1_list
+    hcore1_bra = np.zeros_like(hcore_py)
+    hcore1_ket = np.zeros_like(hcore_py)
 
+    for i in range(hcore_py.shape[0]):
 
-def get_hcore1_operator(mf, mol=None):
+        atoms_i = int(i in range(mol.aoslice_by_atom()[atom][2],
+                                  mol.aoslice_by_atom()[atom][3]))
 
-    r"""Function to get the matrix element of the hcore derivative containing
-    just the contribution from the operator derivative and not that of the
-    basis functions.
+        for j in range(hcore_py.shape[0]):
 
-    Based on a function from PySCF that calculates the full hcore derivative,
-    so to achieve what we want i have set the zeroth order hcore to be zero.
-    """
+            atoms_j = int(j in range(mol.aoslice_by_atom()[atom][2],
+                                      mol.aoslice_by_atom()[atom][3]))
 
-    if mol is None: mol = mf.mol
-    with_x2c = getattr(mf.base, 'with_x2c', None)
+            hcore1_bra[i][j] += hcore_py[i][j]*atoms_i
+            hcore1_ket[i][j] += hcore_py[j][i]*atoms_j
 
-    if with_x2c:
+    omega = np.identity(2)
+    hcore1_bra = np.kron(omega, hcore1_bra)
+    hcore1_ket = np.kron(omega, hcore1_ket)
 
-        hcore_deriv = with_x2c.hcore_deriv_generator(deriv=1)
-
-    else:
-
-        with_ecp = mol.has_ecp()
-        if with_ecp:
-            ecp_atoms = set(mol._ecpbas[:,gto.ATOM_OF])
-        else:
-            ecp_atoms = ()
-
-        aoslices = mol.aoslice_by_atom()
-        h1 = mf.get_hcore(mol)
-
-        def hcore_deriv(atm_id):
-
-            shl0, shl1, p0, p1 = aoslices[atm_id]
-
-            with mol.with_rinv_at_nucleus(atm_id):
-                vrinv = mol.intor('int1e_iprinv', comp=3) # <\nabla|1/r|>
-                vrinv *= -mol.atom_charge(atm_id)
-                if with_ecp and atm_id in ecp_atoms:
-                    vrinv += mol.intor('ECPscalar_iprinv', comp=3)
-
-            vrinv[:,p0:p1] += h1[:,p0:p1]
-
-            return vrinv + vrinv.transpose(0,2,1)
-
-    return hcore_deriv
+    return hcore1_bra, hcore1_ket
 
 
 def get_j1_partial(mol, atom, coord):
@@ -121,37 +148,37 @@ def get_j1_partial(mol, atom, coord):
     omega = np.identity(2)
     spin_j = np.einsum("ij,kl->ikjl", omega, omega)
 
-    twoe = -mol.intor("int2e_ip1")[coord] #minus sign due to pyscf definition
+    pi_py = -mol.intor("int2e_ip1")[coord] #minus sign due to pyscf definition
 
-    j1_bra0 = np.zeros_like(twoe)
-    j1_bra1 = np.zeros_like(twoe)
-    j1_ket0 = np.zeros_like(twoe)
-    j1_ket1 = np.zeros_like(twoe)
+    j1_bra0 = np.zeros_like(pi_py)
+    j1_bra1 = np.zeros_like(pi_py)
+    j1_ket0 = np.zeros_like(pi_py)
+    j1_ket1 = np.zeros_like(pi_py)
 
-    for i in range(twoe.shape[0]):
+    for i in range(pi_py.shape[0]):
 
         atoms_i = int(i in range(mol.aoslice_by_atom()[atom][2],
                                   mol.aoslice_by_atom()[atom][3]))
 
-        for j in range(twoe.shape[0]):
+        for j in range(pi_py.shape[0]):
 
             atoms_j = int(j in range(mol.aoslice_by_atom()[atom][2],
                                       mol.aoslice_by_atom()[atom][3]))
 
-            for k in range(twoe.shape[0]):
+            for k in range(pi_py.shape[0]):
 
                 atoms_k = int(k in range(mol.aoslice_by_atom()[atom][2],
                                           mol.aoslice_by_atom()[atom][3]))
 
-                for l in range(twoe.shape[0]):
+                for l in range(pi_py.shape[0]):
 
                     atoms_l = int(l in range(mol.aoslice_by_atom()[atom][2],
                                               mol.aoslice_by_atom()[atom][3]))
 
-                    j1_bra0[i][j][k][l] += twoe[i][j][k][l] * atoms_i
-                    j1_bra1[i][j][k][l] += twoe[j][i][k][l] * atoms_j
-                    j1_ket0[i][j][k][l] += twoe[k][l][i][j] * atoms_k
-                    j1_ket1[i][j][k][l] += twoe[l][k][i][j] * atoms_l
+                    j1_bra0[i][j][k][l] += pi_py[i][j][k][l] * atoms_i
+                    j1_bra1[i][j][k][l] += pi_py[j][i][k][l] * atoms_j
+                    j1_ket0[i][j][k][l] += pi_py[k][l][i][j] * atoms_k
+                    j1_ket1[i][j][k][l] += pi_py[l][k][i][j] * atoms_l
 
 
     j1_bra0 = np.einsum("abcd->acbd", j1_bra0,
@@ -288,9 +315,30 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
             derivative.
     """
 
+    omega = np.identity(2)
     sao0 = mol.intor("int1e_ovlp")
-    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
+    sao0 = np.kron(omega, sao0)
+
+    sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
+
+    if not complexsymmetric:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao0,
+                                      x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_bra,
+                                         x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_ket,
+                                          x_g0[:, 0:nelec]])
+    else:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao0,
+                                      x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_bra,
+                                          x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_ket,
+                                          x_g0[:, 0:nelec]])
+
     hcore0 = get_hcore0(mol)
+    hcore1_bra, hcore1_ket = get_hcore1_partial(mol, atom, coord)
+    hcore1_op = get_hcore1_op(mol, atom, coord)
 
     onewx1 = 0
 
@@ -304,12 +352,11 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         for m in range(nelec):
 
             #Term A
-            wp_g01 = w_g0
+            wp_g01 = np.copy(w_g0)
             wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
             wpxlambda01, wp_g01_t, x_g0_t = lowdin_pairing(wp_g01, x_g0, mol,
                                                            nelec,
-                                                           complexsymmetric
-                                                           )
+                                                           complexsymmetric)
             wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m])
             xwp_p01 = get_xw_p(wp_g01_t, x_g0_t, m, complexsymmetric)
 
@@ -317,12 +364,12 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                      xwp_p01)
 
             #Term B
-            wpxsao10 = sao0
-            wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
+            wpxsmo10 = np.copy(wxsmo0)
+            wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
             wpxlambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                        mol, nelec,
-                                                        complexsymmetric,
-                                                        wpxsao10)
+                                                         mol, nelec,
+                                                         complexsymmetric,
+                                                         wpxsmo10)
             wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m])
             xwp_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
@@ -336,12 +383,12 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                          xwp_p10)
 
             #Term D
-            wxpsao10 = sao0
-            wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
+            wxpsmo10 = np.copy(wxsmo0)
+            wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
             wxplambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                        mol, nelec,
-                                                        complexsymmetric,
-                                                        wxpsao10)
+                                                         mol, nelec,
+                                                         complexsymmetric,
+                                                         wxpsmo10)
             wxplowdin_prod10 = lowdin_prod(wxplambda10, [m])
             xpw_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
@@ -355,12 +402,11 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                          xpw_p10)
 
             #Term E
-            xp_g01 = x_g0
+            xp_g01 = np.copy(x_g0)
             xp_g01[:,p] = x_g1[:,p] #Replace pth x_g0 column with x_g1
             wxplambda01, w_g0_t, xp_g01_t = lowdin_pairing(w_g0, xp_g01, mol,
-                                                          nelec,
-                                                          complexsymmetric
-                                                          )
+                                                           nelec,
+                                                           complexsymmetric)
             wxplowdin_prod01 = lowdin_prod(wxplambda01, [m])
             xpw_p01 = get_xw_p(w_g0_t, xp_g01_t, m, complexsymmetric)
 
@@ -370,7 +416,8 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         onewx1 += onewpx01 + onewpx10 + onewxp10 + onewxp01
 
     #Term C
-    wxlambda0 = lowdin_pairing(w_g0, x_g0, mol, nelec, complexsymmetric)
+    wxlambda0,w_g0_t,x_g0_t = lowdin_pairing(w_g0, x_g0, mol, nelec,
+                                             complexsymmetric)
     onewx010 = 0
 
     for m in range(nelec):
@@ -508,8 +555,27 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
             derivative.
     """
 
+    omega = np.identity(2)
     sao0 = mol.intor("int1e_ovlp")
-    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
+    sao0 = np.kron(omega, sao0)
+
+    sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
+
+    if not complexsymmetric:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao0,
+                                      x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_bra,
+                                          x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_ket,
+                                          x_g0[:, 0:nelec]])
+    else:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao0,
+                                      x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_bra,
+                                          x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_ket,
+                                          x_g0[:, 0:nelec]])
+
     j0 = get_j0(mol)
     j1_bra0, j1_bra1, j1_ket0, j1_ket1 = get_j1_partial(mol, atom, coord)
 
@@ -529,7 +595,7 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                     continue
 
                 #Term A
-                wp_g01 = w_g0
+                wp_g01 = np.copy(w_g0)
                 wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
                 wpxlambda01,wp_g01_t,x_g0_t = lowdin_pairing(wp_g01, x_g0,
                                                              mol, nelec,
@@ -545,12 +611,12 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                           j0,xwp_p01_m,xwp_p01_n)))
 
                 #Term B
-                wpxsao10 = sao0
-                wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
+                wpxsmo10 = np.copy(wxsmo0)
+                wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
                 wpxlambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                            mol, nelec,
-                                                            complexsymmetric,
-                                                            wpxsao10)
+                                                             mol, nelec,
+                                                             complexsymmetric,
+                                                             wpxsmo10)
                 wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m,n])
                 xwp_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
                 xwp_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
@@ -575,12 +641,12 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                               j0,xwp_p10_m,xwp_p10_n)))
 
                 #Term D
-                wxpsao10 = sao0
-                wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
+                wxpsmo10 = np.copy(wxsmo0)
+                wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
                 wxplambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                            mol, nelec,
-                                                            complexsymmetric,
-                                                            wxpsao10)
+                                                             mol, nelec,
+                                                             complexsymmetric,
+                                                             wxpsmo10)
                 wxplowdin_prod10 = lowdin_prod(wxplambda10, [m,n])
                 xpw_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
                 xpw_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
@@ -605,7 +671,7 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                               j0,xpw_p10_m,xpw_p10_n)))
 
                 #Term E
-                xp_g01 = x_g0
+                xp_g01 = np.copy(x_g0)
                 xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
                 wxplambda01,w_g0_t,xp_g01_t = lowdin_pairing(w_g0, xp_g01,
                                                              mol, nelec,
@@ -645,7 +711,8 @@ def get_nucwx0(mol, wxlambda0, complexsymmetric: bool):
 
     :returns: The nuclear repulsion contribution to the hamiltonian element.
     """
-    swx0 = lowdin_prod(wxlambda0, [])
+
+    swx0 = get_swx0(wxlambda0)
     e0_nuc = get_e0_nuc(mol)
 
     nucwx0 = swx0 * e0_nuc
@@ -653,7 +720,7 @@ def get_nucwx0(mol, wxlambda0, complexsymmetric: bool):
     return nucwx0
 
 
-def get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
+def get_nucwx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                complexsymmetric: bool):
 
     r"""Calculates the first order nuclear repulsion contribution to the
@@ -675,10 +742,14 @@ def get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
             coord = '0' for x
                     '1' for y
                     '2' for z
-    :param wxlambda0: Diagonal matrix of Löwdin singular values for the wth
-            and xth determinant.
-    :param wxlambda1: Diagonal matrix of first order Löwdin singular values
-            for the wth and xth determinant.
+    :param w_g0: The zeroth order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g0: The zeroth order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param w_g1: The first order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g1: The first order molecular orbital coefficient matrix of the
+            xth determinant.
     :param nelec: The number of electrons in the molecule, determines which
             orbitals are occupied and virtual.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
@@ -688,8 +759,9 @@ def get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
             derivative.
     """
 
-    swx0 = lowdin_prod(wxlambda0, [])
-    swx1 = get_swx1(wxlambda0, wxlambda1, nelec)
+    swx0 = get_swx0(wxlambda0)
+    swx1 = get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
+                    complexsymmetric)
 
     e0_nuc = get_e0_nuc(mol)
     e1_nuc = get_e1_nuc(mol, atom, coord)
@@ -716,6 +788,9 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
     """
     nnoci = len(g0_list)
     h0mat = np.zeros((nnoci,nnoci))
+    onemat = np.zeros((nnoci,nnoci))
+    twomat = np.zeros((nnoci,nnoci))
+    nucmat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
         for x in range(nnoci):
@@ -724,7 +799,7 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
             x_g0 = g0_list[x]
 
             wxlambda0, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                                      complexsymmetric)
+                                                       complexsymmetric)
 
             onewx0 = get_onewx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec,
                                 complexsymmetric)
@@ -734,13 +809,15 @@ def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):
 
             h0mat[w,x] = onewx0 + twowx0 + nucwx0
 
-            # print(w, x)
-            # print("two electron:", twowx0)
+            onemat[w,x] = onewx0
+            twomat[w,x] = twowx0
+            nucmat[w,x] = nucwx0
 
     return h0mat
 
 
-def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
+def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
+              complexsymmetric: bool):
 
     r"""Constructs a matrix of the same dimensions as the noci expansion of
     the hamiltonian element derivatives between all determinant combinations.
@@ -755,6 +832,8 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
                     '1' for y
                     '2' for z
     :param g0_list: Python list of molecular orbital coefficient matrices.
+    :param g1_list: Python list of molecular orbital coefficient matrix
+            derivatives.
     :param nelec: The number of electrons in the molecule, determines which
             orbitals are occupied and virtual.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
@@ -764,7 +843,6 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     """
     nnoci = len(g0_list)
     h1mat = np.zeros((nnoci,nnoci))
-    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
 
     for w in range(nnoci):
         for x in range(nnoci):
@@ -778,8 +856,8 @@ def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
                                 nelec, complexsymmetric)
             twowx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                 nelec, complexsymmetric)
-            nucwx1 = get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,
-                                complexsymmetric)
+            nucwx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
+                                nelec, complexsymmetric)
 
             h1mat[w,x] = onewx1 + twowx1 + nucwx1
 

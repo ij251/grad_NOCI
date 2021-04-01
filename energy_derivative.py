@@ -1,10 +1,7 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import *
-from zeroth_order_ghf import *
-from overlap_derivative import *
-from hamiltonian_derivative import *
-from non_ortho import *
+from overlap_derivative import get_s1mat, get_g1_list
+from hamiltonian_derivative import get_h0mat, get_h1mat
 
 
 def get_e0_noci(a, mol, g0_list, nelec, complexsymmetric):
@@ -73,15 +70,30 @@ def get_e1_noci(a, mol, atom, coord, g0_list, nelec, complexsymmetric):
     """
 
     e0_noci = get_e0_noci(a, mol, g0_list, nelec, complexsymmetric)
-    s1mat = get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric)
-    h1mat = get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric)
+    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
+    s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec,
+                      complexsymmetric)
+    # for i in range(len(g0_list)):
+    #     print("g"+ str(i) + "0:\n", g0_list[i])
+    h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
+                      complexsymmetric)
     nnoci = len(g0_list)
+    e1_noci = 0
 
-    if not complexsymmetric:
-        e1_noci = np.sum(np.conj(a[w])*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
-                         for w in range(nnoci) for x in range(nnoci))
-    else:
-        e1_noci = np.sum(a[w]*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
-                         for w in range(nnoci) for x in range(nnoci))
+    for w in range(nnoci):
+        for x in range(nnoci):
+
+            e1_noci += np.conj(a[w])*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
+            print("\n(w,x):", w,x)
+            print("h1mat[w,x]:\n", h1mat[w,x])
+            print("s1mat[w,x]:\n", s1mat[w,x])
+            print("e1_noci running total:\n", e1_noci)
+
+    # if not complexsymmetric:
+    #     e1_noci = np.sum(np.conj(a[w])*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
+    #                      for w in range(nnoci) for x in range(nnoci))
+    # else:
+    #     e1_noci = np.sum(a[w]*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
+    #                      for w in range(nnoci) for x in range(nnoci))
 
     return e1_noci

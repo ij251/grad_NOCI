@@ -1,8 +1,36 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import *
-from zeroth_order_ghf import *
-from non_ortho import *
+from first_order_ghf import g1_iteration
+from non_ortho import lowdin_prod, lowdin_pairing
+
+
+def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
+
+    r"""Converts a list of zeroth order molecular orbital coefficient matrices
+    to a list of first order molecular orbital coefficient matrices.
+
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+    :param g0_list: Python list of molecular orbital coefficient matrices.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+
+    :returns: Python list of first order MO coefficient matrices.
+    """
+
+    g1_list = [g1_iteration(complexsymmetric, mol, atom, coord, nelec,
+                            g0) for g0 in g0_list]
+
+    return g1_list
 
 
 def get_swx0(wxlambda0):
@@ -15,6 +43,8 @@ def get_swx0(wxlambda0):
 
     :param wxlambda0: Diagonal matrix of Löwdin singular values for the wth
             and xth determinant.
+
+    :returns: Numerical value for overlap.
     """
 
     swx0 = lowdin_prod(wxlambda0, [])
@@ -79,29 +109,29 @@ def get_sao1_partial(mol, atom, coord):
             the second the ket.
     """
 
-    sao0 =  mol.intor("int1e_ovlp")
-    onee = -mol.intor("int1e_ipovlp") #minus sign due to pyscf definition
-    s1_bra = np.zeros_like(sao0)
-    s1_ket = np.zeros_like(sao0)
+    s_py = -mol.intor("int1e_ipovlp")[coord]
+    #minus sign due to pyscf definition
+    sao1_bra = np.zeros_like(s_py)
+    sao1_ket = np.zeros_like(s_py)
 
-    for i in range(sao0.shape[1]):
+    for i in range(s_py.shape[0]):
 
         atoms_i = int(i in range(mol.aoslice_by_atom()[atom][2],
                                   mol.aoslice_by_atom()[atom][3]))
 
-        for j in range(sao0.shape[1]):
+        for j in range(s_py.shape[0]):
 
             atoms_j = int(j in range(mol.aoslice_by_atom()[atom][2],
                                       mol.aoslice_by_atom()[atom][3]))
 
-            s1_bra[i][j] += onee[coord][i][j]*atoms_i
-            s1_ket[i][j] += onee[coord][j][i]*atoms_j
+            sao1_bra[i][j] += s_py[i][j]*atoms_i
+            sao1_ket[i][j] += s_py[j][i]*atoms_j
 
     omega = np.identity(2)
-    s1_bra = np.kron(omega, s1_bra)
-    s1_ket = np.kron(omega, s1_ket)
+    sao1_bra = np.kron(omega, sao1_bra)
+    sao1_ket = np.kron(omega, sao1_ket)
 
-    return s1_bra, s1_ket
+    return sao1_bra, sao1_ket
 
 
 def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
@@ -161,35 +191,52 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     :returns: single value swx1 for overlap derivative.
     """
 
+    omega = np.identity(2)
     sao0 = mol.intor("int1e_ovlp")
-    s1_bra, s1_ket = get_sao1_partial(mol, atom, coord)
+    sao0 = np.kron(omega, sao0)
+
+    sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
+    if not complexsymmetric:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao0,
+                                      x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_bra,
+                                   x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_ket,
+                                   x_g0[:, 0:nelec]])
+    else:
+        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao0,
+                                   x_g0[:, 0:nelec]]) #Only occ orbitals
+        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_bra,
+                                   x_g0[:, 0:nelec]])
+        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_ket,
+                                   x_g0[:, 0:nelec]])
 
     swx1 = 0
 
     for p in range(nelec):
 
-        wp_g01 = w_g0
+        wp_g01 = np.copy(w_g0)
         wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
         wpxlambda01,_,_ = lowdin_pairing(wp_g01, x_g0, mol, nelec,
                                          complexsymmetric)
 
         swpx01 = lowdin_prod(wpxlambda01, []) #Term A
 
-        wpxsao10 = sao0
-        wpxsao10[p,:] = s1_bra[p,:] #Replace pth sao row with (1|0)
+        wpxsmo10 = np.copy(wxsmo0)
+        wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
         wpxlambda10,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                         complexsymmetric, wpxsao10)
+                                         complexsymmetric, wpxsmo10)
 
         swpx10 = lowdin_prod(wpxlambda10, []) #Term B
 
-        wxpsao10 = sao0
-        wxpsao10[:,p] = s1_ket[:,p] #Replace pth sao column with (0|1)
+        wxpsmo10 = np.copy(wxsmo0)
+        wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
         wxplambda10,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                      complexsymmetric, wxpsao10)
+                                         complexsymmetric, wxpsmo10)
 
         swxp10 = lowdin_prod(wxplambda10, []) #Term D
 
-        xp_g01 = x_g0
+        xp_g01 = np.copy(x_g0)
         xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
         wxplambda01,_,_ = lowdin_pairing(w_g0, xp_g01, mol, nelec,
                                         complexsymmetric)
@@ -201,7 +248,8 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     return swx1
 
 
-def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
+def get_s1mat(mol, atom, coord, g0_list, g1_list, nelec,
+              complexsymmetric: bool):
 
     r"""Constructs a matrix of the same dimensions as the noci expansion of
     the overlap derivatives between all determinant combinations.
@@ -216,6 +264,8 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
                     '1' for y
                     '2' for z
     :param g0_list: Python list of molecular orbital coefficient matrices.
+    :param g1_list: Python list of molecular orbital coefficient matrix
+            derivatives.
     :param nelec: The number of electrons in the molecule, determines which
             orbitals are occupied and virtual.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
@@ -224,7 +274,6 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     :returns: Matrix of overlap derivatives.
     """
 
-    g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric)
     nnoci = len(g0_list)
 
     s1mat = np.zeros((nnoci,nnoci))
@@ -239,5 +288,6 @@ def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
 
             s1mat[w,x] = get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                   nelec, complexsymmetric)
+
 
     return s1mat

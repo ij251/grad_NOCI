@@ -1,10 +1,8 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import *
-from zeroth_order_ghf import *
 
 
-def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, sao = None):
+def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, wxs=None):
 
     r"""Calculates the diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -46,9 +44,10 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, sao = None):
             determinant.
     :param x_g: The molecular orbital coefficient matrix of the xth
             determinant.
-    :param sao: Gives option to specify different sao atomic orbital overlap
+    :param wxs: Gives option to specify different molecular orbital overlap
             matrix, by default set to None in which case it will use the
-            standard zeroth order overlap matrix from PySCF.
+            standard MO overlap constructed from zeroth order MO coefficients
+            and AO overlap matrix.
     :param mol: The pyscf molecule class, from which the nuclear coordinates
             and atomic numbers are taken.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
@@ -60,26 +59,26 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, sao = None):
     """
 
     omega = np.identity(2)
-    if sao==None:
-        sao0 = mol.intor("int1e_ovlp")
-        sao0 = np.kron(omega, sao0)
-        sao = sao0
+    sao = mol.intor("int1e_ovlp")
+    sao = np.kron(omega, sao)
 
-    if not complexsymmetric:
-        wxs0 = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
-                                    x_g[:, 0:nelec]]) #Only occ orbitals
-    else:
-        wxs0 = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
-                                    x_g[:, 0:nelec]])
+    if wxs is None:
+        if not complexsymmetric:
+            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
+                                       x_g[:, 0:nelec]]) #Only occ orbitals
+        else:
+            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
+                                       x_g[:, 0:nelec]])
 
-    wxu,wxlambda0,wxvh = np.linalg.svd(wxs0)
+    wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
-    wxlambda0 = np.diag(wxlambda0)
     det_wxu = np.linalg.det(wxu)
     det_wxv = np.linalg.det(wxv)
+    wxu[:,0] *= det_wxu.conj() #Removes phase induced by unitary transform
+    wxv[:,0] *= det_wxv.conj()
 
     assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
-                       rtol = 1.e-5, atol = 1.e-8)
+                       rtol = 1.e-5, atol = 1.e-8) #Check Unitary
     assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
                        rtol = 1.e-5, atol = 1.e-8)
 
@@ -90,10 +89,14 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, sao = None):
 
     x_g_t = np.dot(x_g[:,0:nelec], wxv)
 
-    w_g_t[:,0] *= det_wxu.conj() #Removes phase induced by unitary transform
-    x_g_t[:,0] *= det_wxv.conj()
+    if not complexsymmetric:
+        wxlambda = np.linalg.multi_dot([wxu.T.conj(), wxs, wxv])
+    else:
+        wxlambda = np.linalg.multi_dot([wxu.T, wxs, wxv])
 
-    return wxlambda0, w_g_t, x_g_t
+    assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
+
+    return wxlambda, w_g_t, x_g_t
 
 
 def lowdin_prod(wxlambda, rmind):
