@@ -2,7 +2,7 @@ import numpy as np
 from pyscf import gto, scf, grad
 
 
-def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, wxs=None):
+def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None, p_tuple = None):
 
     r"""Calculates the diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -58,17 +58,33 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, wxs=None):
             determinant.
     """
 
-    omega = np.identity(2)
-    sao = mol.intor("int1e_ovlp")
-    sao = np.kron(omega, sao)
+    if not complexsymmetric:
+        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
+                                   x_g[:, 0:nelec]])
+    else:
+        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
+                                   x_g[:, 0:nelec]])
 
-    if wxs is None:
+    if p_tuple is not None:
+        assert sao1 is not None
+        p, braket = p_tuple
         if not complexsymmetric:
-            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
-                                       x_g[:, 0:nelec]]) #Only occ orbitals
+            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao1,
+                                        x_g[:, 0:nelec]])
         else:
-            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
-                                       x_g[:, 0:nelec]])
+            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao1,
+                                    x_g[:, 0:nelec]])
+        if braket == 0:
+            # Row replacement
+            wxs[p, :] = wxs1[p, :]
+        elif braket == 1:
+            # Column replacement
+            wxs[:, p] = wxs1[:, p]
+
+    # if np.amax(np.abs(wxs - np.diag(np.diag(wxs)))) <= 1e-10:
+    #     return wxs, w_g, x_g
+
+    # print("wxlambda:\n", wxlambda)
 
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
@@ -90,9 +106,27 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, wxs=None):
     x_g_t = np.dot(x_g[:,0:nelec], wxv)
 
     if not complexsymmetric:
-        wxlambda = np.linalg.multi_dot([wxu.T.conj(), wxs, wxv])
+        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao,
+                                        x_g_t[:, 0:nelec]])
     else:
-        wxlambda = np.linalg.multi_dot([wxu.T, wxs, wxv])
+        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
+                                        x_g_t[:, 0:nelec]])
+
+    if p_tuple is not None:
+        assert sao1 is not None
+        p, braket = p_tuple
+        if not complexsymmetric:
+            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao1,
+                                             x_g_t[:, 0:nelec]])
+        else:
+            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao1,
+                                             x_g_t[:, 0:nelec]])
+        if braket == 0:
+            # Row replacement
+            wxlambda[p, :] = wxlambda1[p, :]
+        elif braket == 1:
+            # Column replacement
+            wxlambda[:, p] = wxlambda1[:, p]
 
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 

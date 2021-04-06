@@ -1,6 +1,6 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from zeroth_order_ghf import get_hcore0, get_j0, get_e0_nuc
+from cphf.zeroth_order_ghf import get_hcore0, get_j0, get_e0_nuc
 from cphf.first_order_ghf import get_hcore1, get_s1
 from overlap_derivative import get_g1_list, get_swx0, get_sao1_partial,\
         get_swx1
@@ -351,113 +351,122 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
 
     for p in range(nelec):
 
+        print("\n")
+        print("#######################\np =", p, "\n#######################")
         onewpx01 = 0 #Term A
         onewpx10 = 0 #Term B
         onewxp10 = 0 #Term D
         onewxp01 = 0 #Term E
-        print("#######################\np =", p, "\n#######################")
+
+        # Lowdin pairing for the various terms
+        omega = np.identity(2)
+        sao = mol.intor("int1e_ovlp")
+        sao = np.kron(omega, sao)
+
+        #Term A
+        wp_g01 = np.copy(w_g0)
+        wp_g01[:, p] = w_g1[:, p] #Replace pth w_g0 column with w_g1
+        wpxlambda01_A, wp_g01_t_A, x_g0_t_A\
+                = lowdin_pairing(wp_g01, x_g0, nelec, sao,
+                                 complexsymmetric)
+
+        #Term B
+        wpxlambda10_B, w_g0_t_B, x_g0_t_B\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_bra, (p, 0))
+
+        #Term D
+        wxplambda10_D, w_g0_t_D, x_g0_t_D\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_ket, (p, 1))
+
+        #Term E
+        xp_g01 = np.copy(x_g0)
+        xp_g01[:, p] = x_g1[:, p] #Replace pth x_g0 column with x_g1
+        wxplambda01_E, w_g0_t_E, xp_g01_t_E\
+                = lowdin_pairing(w_g0, xp_g01, nelec, sao,
+                                 complexsymmetric)
 
         for m in range(nelec):
 
             print("==================\nm =", m, "\n==================")
-            #Term A
-            wp_g01 = np.copy(w_g0)
-            wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
-            wpxlambda01, wp_g01_t, x_g0_t = lowdin_pairing(wp_g01, x_g0, mol,
-                                                           nelec,
-                                                           complexsymmetric)
-            wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m])
-            xwp_p01 = get_xw_p(wp_g01_t, x_g0_t, m, complexsymmetric)
+
+            # Term A
+            wpxlowdin_prod01 = lowdin_prod(wpxlambda01_A, [m])
+            xwp_p01_A = get_xw_p(wp_g01_t_A, x_g0_t_A, m, complexsymmetric)
 
             onewpx01 += wpxlowdin_prod01 * np.einsum("ij,ji->", hcore0,
-                                                     xwp_p01)
+                                                     xwp_p01_A)
 
-            #Term B
-            wpxsmo10 = np.copy(wxsmo0)
-            wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
-            wpxlambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                         mol, nelec,
-                                                         complexsymmetric,
-                                                         wpxsmo10)
+            # Term B
             # if m == 0:
             # print("wpxsmo10:\n", wpxsmo10)
-            # print("B lowdin:\n", wpxlambda10)
+            # print("B lowdin:\n", wpxlambda10_B)
 
             # print("w_g0:\n", w_g0)
             # print("x_g0:\n", x_g0)
             # print("w_g0_t:\n", w_g0_t)
             # print("x_g0_t:\n", x_g0_t)
-            wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m])
-            xwp_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
+            wpxlowdin_prod10 = lowdin_prod(wpxlambda10_B, [m])
+            xwp_p10_B = get_xw_p(w_g0_t_B, x_g0_t_B, m, complexsymmetric)
 
             # print("wpxlowdin_prod10:", wpxlowdin_prod10)
-            # print("density matrix:\n", xwp_p10)
+            # print("density matrix:\n", xwp_p10_B)
             # print("before onewpx10:", onewpx10)
             if m == p:
                 # print("%%%%% m = p %%%%%")
                 onewpx10 += wpxlowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore1_bra,
-                                                         xwp_p10)
-                # print(f"m={m}, p={p}", wpxlowdin_prod10*np.einsum("ij,ji->",
-                #                                          hcore1_bra,
-                #                                          xwp_p10))
+                                                         xwp_p10_B)
+                print(f"m={m} = p={p}, B =", wpxlowdin_prod10*np.einsum("ij,ji->",
+                                                         hcore1_bra,
+                                                         xwp_p10_B))
             else:
                 onewpx10 += wpxlowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore0,
-                                                         xwp_p10)
-                # print(f"m={m}, p={p}", wpxlowdin_prod10*np.einsum("ij,ji->",
-                #                                          hcore0,
-                #                                          xwp_p10))
+                                                         xwp_p10_B)
+                print(f"m={m} != p={p}, B =", wpxlowdin_prod10*np.einsum("ij,ji->",
+                                                         hcore0,
+                                                         xwp_p10_B))
             # print("after onewpx10:", onewpx10)
 
 
-            #Term D
-            wxpsmo10 = np.copy(wxsmo0)
-            wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
-            wxplambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                         mol, nelec,
-                                                         complexsymmetric,
-                                                         wxpsmo10)
-            wxplowdin_prod10 = lowdin_prod(wxplambda10, [m])
-            xpw_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
+            # Term D
+            wxplowdin_prod10 = lowdin_prod(wxplambda10_D, [m])
+            xpw_p10_D = get_xw_p(w_g0_t_D, x_g0_t_D, m, complexsymmetric)
 
             if m == p:
                 onewxp10 += wxplowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore1_ket,
-                                                         xpw_p10)
+                                                         xpw_p10_D)
             else:
                 onewxp10 += wxplowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore0,
-                                                         xpw_p10)
+                                                         xpw_p10_D)
 
-            #Term E
-            xp_g01 = np.copy(x_g0)
-            xp_g01[:,p] = x_g1[:,p] #Replace pth x_g0 column with x_g1
-            wxplambda01, w_g0_t, xp_g01_t = lowdin_pairing(w_g0, xp_g01, mol,
-                                                           nelec,
-                                                           complexsymmetric)
-            wxplowdin_prod01 = lowdin_prod(wxplambda01, [m])
-            xpw_p01 = get_xw_p(w_g0_t, xp_g01_t, m, complexsymmetric)
-
+            # Term E
+            wxplowdin_prod01 = lowdin_prod(wxplambda01_E, [m])
+            xpw_p01_E = get_xw_p(w_g0_t_E, xp_g01_t_E, m, complexsymmetric)
             onewxp01 += wxplowdin_prod01 * np.einsum("ij,ji->", hcore0,
-                                                     xpw_p01)
+                                                     xpw_p01_E)
 
 
-            # print("A lowdin:\n", wpxlambda01)
-            # print("D lowdin:\n", wxplambda10)
-            # print("E lowdin:\n", wxplambda01)
+            # print("A lowdin:\n", wpxlambda01_A)
+            # print("D lowdin:\n", wxplambda10_D)
+            # print("E lowdin:\n", wxplambda01_E)
 
         onewx1 += onewpx01 + onewpx10 + onewxp10 + onewxp01
 
-        # print("A contribution:", onewpx01)
-        # print("B contribution:", onewpx10)
-        # print("D contribution:", onewxp10)
+        print("")
+        print(f"A contribution from p = {p}:", onewpx01)
+        print(f"B contribution from p = {p}:", onewpx10)
+        print(f"D contribution from p = {p}:", onewxp10)
         # print("E contribution:", onewxp01)
 
 
-    #Term C
-    wxlambda0,w_g0_t,x_g0_t = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                             complexsymmetric)
+    # Term C
+    wxlambda0, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0, nelec, sao,
+                                               complexsymmetric)
     onewx010 = 0
 
     for m in range(nelec):
@@ -629,6 +638,35 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         twowxp10 = 0 #Term D
         twowxp01 = 0 #Term E
 
+        # Lowdin pairing for the various terms
+        omega = np.identity(2)
+        sao = mol.intor("int1e_ovlp")
+        sao = np.kron(omega, sao)
+
+        #Term A
+        wp_g01 = np.copy(w_g0)
+        wp_g01[:, p] = w_g1[:, p] #Replace pth w_g0 column with w_g1
+        wpxlambda01_A, wp_g01_t_A, x_g0_t_A\
+                = lowdin_pairing(wp_g01, x_g0, nelec, sao,
+                                 complexsymmetric)
+
+        #Term B
+        wpxlambda10_B, w_g0_t_B, x_g0_t_B\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_bra, (p, 0))
+
+        #Term D
+        wxplambda10_D, w_g0_t_D, x_g0_t_D\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_ket, (p, 1))
+
+        #Term E
+        xp_g01 = np.copy(x_g0)
+        xp_g01[:, p] = x_g1[:, p] #Replace pth x_g0 column with x_g1
+        wxplambda01_E, w_g0_t_E, xp_g01_t_E\
+                = lowdin_pairing(w_g0, xp_g01, nelec, sao,
+                                 complexsymmetric)
+
         for m in range(nelec):
             for n in range(nelec):
 
@@ -636,96 +674,74 @@ def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                     continue
 
                 #Term A
-                wp_g01 = np.copy(w_g0)
-                wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
-                wpxlambda01,wp_g01_t,x_g0_t = lowdin_pairing(wp_g01, x_g0,
-                                                             mol, nelec,
-                                                             complexsymmetric)
-                wpxlowdin_prod01 = lowdin_prod(wpxlambda01, [m,n])
-                xwp_p01_m = get_xw_p(wp_g01_t, x_g0_t, m, complexsymmetric)
-                xwp_p01_n = get_xw_p(wp_g01_t, x_g0_t, n, complexsymmetric)
+                wpxlowdin_prod01 = lowdin_prod(wpxlambda01_A, [m,n])
+                xwp_p01_A_m = get_xw_p(wp_g01_t_A, x_g0_t_A, m, complexsymmetric)
+                xwp_p01_A_n = get_xw_p(wp_g01_t_A, x_g0_t_A, n, complexsymmetric)
 
                 twowpx01 += (wpxlowdin_prod01*0.5*
                              (np.einsum("ijkl,ji,lk->",
-                                        j0,xwp_p01_m,xwp_p01_n)
+                                        j0,xwp_p01_A_m,xwp_p01_A_n)
                               - np.einsum("ijkl,li,jk->",
-                                          j0,xwp_p01_m,xwp_p01_n)))
+                                          j0,xwp_p01_A_m,xwp_p01_A_n)))
 
                 #Term B
-                wpxsmo10 = np.copy(wxsmo0)
-                wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
-                wpxlambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                             mol, nelec,
-                                                             complexsymmetric,
-                                                             wpxsmo10)
-                wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m,n])
-                xwp_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
-                xwp_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
+                wpxlowdin_prod10 = lowdin_prod(wpxlambda10_B, [m,n])
+                xwp_p10_B_m = get_xw_p(w_g0_t_B, x_g0_t_B, m, complexsymmetric)
+                xwp_p10_B_n = get_xw_p(w_g0_t_B, x_g0_t_B, n, complexsymmetric)
 
                 if m == p:
                     twowpx10 += (wpxlowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j1_bra0,xwp_p10_m,xwp_p10_n)
+                                            j1_bra0,xwp_p10_B_m,xwp_p10_B_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j1_bra0,xwp_p10_m,xwp_p10_n)))
+                                              j1_bra0,xwp_p10_B_m,xwp_p10_B_n)))
                 elif n == p:
                     twowpx10 += (wpxlowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j1_bra1,xwp_p10_m,xwp_p10_n)
+                                            j1_bra1,xwp_p10_B_m,xwp_p10_B_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j1_bra1,xwp_p10_m,xwp_p10_n)))
+                                              j1_bra1,xwp_p10_B_m,xwp_p10_B_n)))
                 else:
                     twowpx10 += (wpxlowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j0,xwp_p10_m,xwp_p10_n)
+                                            j0,xwp_p10_B_m,xwp_p10_B_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j0,xwp_p10_m,xwp_p10_n)))
+                                              j0,xwp_p10_B_m,xwp_p10_B_n)))
 
                 #Term D
-                wxpsmo10 = np.copy(wxsmo0)
-                wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
-                wxplambda10, w_g0_t, x_g0_t = lowdin_pairing(w_g0, x_g0,
-                                                             mol, nelec,
-                                                             complexsymmetric,
-                                                             wxpsmo10)
-                wxplowdin_prod10 = lowdin_prod(wxplambda10, [m,n])
-                xpw_p10_m = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
-                xpw_p10_n = get_xw_p(w_g0_t, x_g0_t, n, complexsymmetric)
+                wxplowdin_prod10 = lowdin_prod(wxplambda10_D, [m,n])
+                xpw_p10_D_m = get_xw_p(w_g0_t_D, x_g0_t_D, m, complexsymmetric)
+                xpw_p10_D_n = get_xw_p(w_g0_t_D, x_g0_t_D, n, complexsymmetric)
 
                 if m == p:
                     twowxp10 += (wxplowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j1_ket0,xpw_p10_m,xpw_p10_n)
+                                            j1_ket0,xpw_p10_D_m,xpw_p10_D_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j1_ket0,xpw_p10_m,xpw_p10_n)))
+                                              j1_ket0,xpw_p10_D_m,xpw_p10_D_n)))
                 elif n == p:
                     twowxp10 += (wxplowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j1_ket1,xpw_p10_m,xpw_p10_n)
+                                            j1_ket1,xpw_p10_D_m,xpw_p10_D_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j1_ket1,xpw_p10_m,xpw_p10_n)))
+                                              j1_ket1,xpw_p10_D_m,xpw_p10_D_n)))
                 else:
                     twowxp10 += (wxplowdin_prod10*0.5*
                                  (np.einsum("ijkl,ji,lk->",
-                                            j0,xpw_p10_m,xpw_p10_n)
+                                            j0,xpw_p10_D_m,xpw_p10_D_n)
                                   - np.einsum("ijkl,li,jk->",
-                                              j0,xpw_p10_m,xpw_p10_n)))
+                                              j0,xpw_p10_D_m,xpw_p10_D_n)))
 
                 #Term E
-                xp_g01 = np.copy(x_g0)
-                xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
-                wxplambda01,w_g0_t,xp_g01_t = lowdin_pairing(w_g0, xp_g01,
-                                                             mol, nelec,
-                                                             complexsymmetric)
-                wxplowdin_prod01 = lowdin_prod(wxplambda01, [m,n])
-                xpw_p01_m = get_xw_p(w_g0_t, xp_g01_t, m, complexsymmetric)
-                xpw_p01_n = get_xw_p(w_g0_t, xp_g01_t, n, complexsymmetric)
+                wxplowdin_prod01 = lowdin_prod(wxplambda01_E, [m,n])
+                xpw_p01_E_m = get_xw_p(w_g0_t_E, xp_g01_t_E, m, complexsymmetric)
+                xpw_p01_E_n = get_xw_p(w_g0_t_E, xp_g01_t_E, n, complexsymmetric)
 
                 twowxp01 += (wxplowdin_prod01*0.5*
                              (np.einsum("ijkl,ji,lk->",
-                                        j0,xpw_p01_m,xpw_p01_n)
+                                        j0,xpw_p01_E_m,xpw_p01_E_n)
                               - np.einsum("ijkl,li,jk->",
-                                          j0,xpw_p01_m,xpw_p01_n)))
+                                          j0,xpw_p01_E_m,xpw_p01_E_n)))
 
         twowx1 += twowpx01 + twowpx10 + twowxp10 + twowxp01
 
@@ -897,9 +913,13 @@ def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
                                 nelec, complexsymmetric)
             twowx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                 nelec, complexsymmetric)
+
+            # BCH: nucwx1 = get_twowx1???
             nucwx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                 nelec, complexsymmetric)
 
+            print("onewx1:", onewx1)
+            print("twowx1:", twowx1)
             h1mat[w,x] = onewx1 + twowx1 + nucwx1
 
     return h1mat
