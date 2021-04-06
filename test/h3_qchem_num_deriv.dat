@@ -14,15 +14,15 @@
 
 Using bond lengths 2 to 2.01 to calculate numerical derivative:
 
-Energy difference: -0.0017022845
+Energy derivative: -0.17022845
 
-Overlap matrix difference:
+Overlap matrix derivative:
 
-[0.0000000, 0.0000028]
-[0.0000028, 0.0000000]
+[0.00000, 0.00028]
+[0.00028, 0.00000]
 
-Hamiltonian matrix difference:
+Hamiltonian matrix derivative:
 
-[-0.0017023, 0.0000997]
-[0.0000997, -0.0033101]
+[-0.17023, 0.00997]
+[0.00997, -0.33101]
 

@@ -84,10 +84,10 @@ def get_e1_noci(a, mol, atom, coord, g0_list, nelec, complexsymmetric):
         for x in range(nnoci):
 
             e1_noci += np.conj(a[w])*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])
-            print("\n(w,x):", w,x)
-            print("h1mat[w,x]:\n", h1mat[w,x])
-            print("s1mat[w,x]:\n", s1mat[w,x])
-            print("e1_noci running total:\n", e1_noci)
+            # print("\n(w,x):", w,x)
+            # print("h1mat[w,x]:\n", h1mat[w,x])
+            # print("s1mat[w,x]:\n", s1mat[w,x])
+            # print("e1_noci running total:\n", e1_noci)
 
     # if not complexsymmetric:
     #     e1_noci = np.sum(np.conj(a[w])*a[x]*(h1mat[w,x] - e0_noci*s1mat[w,x])

@@ -1,9 +1,8 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import *
-from zeroth_order_ghf import *
-from non_ortho import *
-from energy_derivative import *
+from energy_derivative import get_e0_noci
+from overlap_derivative import get_s0mat
+from hamiltonian_derivative import get_h0mat
 from h3states.h3_states import *
 
 
@@ -25,10 +24,10 @@ for i in range(len(g0_list)):
     print("g"+ str(i) + "0:\n", g0_list[i])
 
 
-# h0mat = get_h0mat(mol, g0_list, nelec, False)
+h0mat = get_h0mat(mol, g0_list, nelec, False)
 e0 = get_e0_noci(a, mol, g0_list, nelec, False)
 s0mat = get_s0mat(mol, g0_list, nelec, False)
 print("\noverlap matrix:\n", s0mat)
-# print("hamiltonian matrix:\n", h0mat)
+print("hamiltonian matrix:\n", h0mat)
 print("\nZeroth order NOCI energy:", e0)
 

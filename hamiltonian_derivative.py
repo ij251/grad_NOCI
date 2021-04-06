@@ -1,6 +1,7 @@
 import numpy as np
 from pyscf import gto, scf, grad
 from zeroth_order_ghf import get_hcore0, get_j0, get_e0_nuc
+from first_order_ghf import get_hcore1, get_s1
 from overlap_derivative import get_g1_list, get_swx0, get_sao1_partial,\
         get_swx1
 from non_ortho import lowdin_pairing, lowdin_prod, get_xw_p
@@ -336,6 +337,12 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_ket,
                                           x_g0[:, 0:nelec]])
 
+    print("sao0:\n", sao0)
+    print("sao1_bra:\n", sao1_bra)
+    print("sao1_ket:\n", sao1_ket)
+    print("wxsmo0:\n", wxsmo0)
+    print("wxsmo1_bra:\n", wxsmo1_bra)
+    print("wxsmo1_ket:\n", wxsmo1_ket)
     hcore0 = get_hcore0(mol)
     hcore1_bra, hcore1_ket = get_hcore1_partial(mol, atom, coord)
     hcore1_op = get_hcore1_op(mol, atom, coord)
@@ -348,9 +355,11 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         onewpx10 = 0 #Term B
         onewxp10 = 0 #Term D
         onewxp01 = 0 #Term E
+        print("#######################\np =", p, "\n#######################")
 
         for m in range(nelec):
 
+            print("==================\nm =", m, "\n==================")
             #Term A
             wp_g01 = np.copy(w_g0)
             wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
@@ -370,17 +379,37 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                                                          mol, nelec,
                                                          complexsymmetric,
                                                          wpxsmo10)
+            # if m == 0:
+            # print("wpxsmo10:\n", wpxsmo10)
+            # print("B lowdin:\n", wpxlambda10)
+
+            # print("w_g0:\n", w_g0)
+            # print("x_g0:\n", x_g0)
+            # print("w_g0_t:\n", w_g0_t)
+            # print("x_g0_t:\n", x_g0_t)
             wpxlowdin_prod10 = lowdin_prod(wpxlambda10, [m])
             xwp_p10 = get_xw_p(w_g0_t, x_g0_t, m, complexsymmetric)
 
+            # print("wpxlowdin_prod10:", wpxlowdin_prod10)
+            # print("density matrix:\n", xwp_p10)
+            # print("before onewpx10:", onewpx10)
             if m == p:
+                # print("%%%%% m = p %%%%%")
                 onewpx10 += wpxlowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore1_bra,
                                                          xwp_p10)
+                # print(f"m={m}, p={p}", wpxlowdin_prod10*np.einsum("ij,ji->",
+                #                                          hcore1_bra,
+                #                                          xwp_p10))
             else:
                 onewpx10 += wpxlowdin_prod10 * np.einsum("ij,ji->",
                                                          hcore0,
                                                          xwp_p10)
+                # print(f"m={m}, p={p}", wpxlowdin_prod10*np.einsum("ij,ji->",
+                #                                          hcore0,
+                #                                          xwp_p10))
+            # print("after onewpx10:", onewpx10)
+
 
             #Term D
             wxpsmo10 = np.copy(wxsmo0)
@@ -413,7 +442,18 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
             onewxp01 += wxplowdin_prod01 * np.einsum("ij,ji->", hcore0,
                                                      xpw_p01)
 
+
+            # print("A lowdin:\n", wpxlambda01)
+            # print("D lowdin:\n", wxplambda10)
+            # print("E lowdin:\n", wxplambda01)
+
         onewx1 += onewpx01 + onewpx10 + onewxp10 + onewxp01
+
+        # print("A contribution:", onewpx01)
+        # print("B contribution:", onewpx10)
+        # print("D contribution:", onewxp10)
+        # print("E contribution:", onewxp01)
+
 
     #Term C
     wxlambda0,w_g0_t,x_g0_t = lowdin_pairing(w_g0, x_g0, mol, nelec,
@@ -428,7 +468,8 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         onewx010 += lowdin_prod0 * np.einsum("ij,ji->", hcore1_op, xw_p0)
 
     onewx1 += onewx010
-
+    # print("C contribution:", onewx010)
+    print("onewx1:", onewx1)
     return onewx1
 
 
@@ -851,7 +892,7 @@ def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
             x_g0 = g0_list[x]
             w_g1 = g1_list[w]
             x_g1 = g1_list[x]
-
+            print("###################\n(w,x)=", w,x, "\n###################")
             onewx1 = get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                 nelec, complexsymmetric)
             twowx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,

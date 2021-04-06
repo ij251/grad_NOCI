@@ -23,6 +23,7 @@ g0_list = [g00, g10]
 
 g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)
 
+print(g10)
 
 s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
 h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
@@ -31,9 +32,3 @@ e1_noci = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)
 print("s1mat:\n", s1mat)
 print("h1mat:\n", h1mat)
 print("e1_noci:\n", e1_noci)
-
-print("\n Compare with QChem:\n")
-print("\ns1mat*0.01:\n", s1mat*0.01)
-print("\nh1mat*0.01:\n", h1mat*0.01)
-print("\ne1_noci*0.01:\n", e1_noci*0.01)
-
