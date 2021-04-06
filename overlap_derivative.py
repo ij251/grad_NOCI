@@ -1,6 +1,6 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import g1_iteration, get_s1
+from cphf.first_order_ghf import g1_iteration, get_s1
 from non_ortho import lowdin_prod, lowdin_pairing
 
 

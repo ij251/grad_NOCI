@@ -1,6 +1,6 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import g1_iteration
+from cphf.first_order_ghf import g1_iteration
 from overlap_derivative import get_s1mat, get_g1_list
 from hamiltonian_derivative import get_h1mat
 from energy_derivative import get_e1_noci

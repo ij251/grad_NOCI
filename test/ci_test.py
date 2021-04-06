@@ -1,7 +1,7 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from first_order_ghf import get_e1_elec, g1_iteration
-from zeroth_order_ghf import rhf_to_ghf, uhf_to_ghf
+from cphf.first_order_ghf import get_e1_elec, g1_iteration
+from cphf.zeroth_order_ghf import rhf_to_ghf, uhf_to_ghf
 from non_ortho import lowdin_pairing
 from energy_derivative import get_e1_noci
 from overlap_derivative import get_s0mat, get_s1mat, get_g1_list

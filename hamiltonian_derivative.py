@@ -1,7 +1,7 @@
 import numpy as np
 from pyscf import gto, scf, grad
 from zeroth_order_ghf import get_hcore0, get_j0, get_e0_nuc
-from first_order_ghf import get_hcore1, get_s1
+from cphf.first_order_ghf import get_hcore1, get_s1
 from overlap_derivative import get_g1_list, get_swx0, get_sao1_partial,\
         get_swx1
 from non_ortho import lowdin_pairing, lowdin_prod, get_xw_p

@@ -3,7 +3,7 @@ from pyscf import gto, scf, grad
 from energy_derivative import get_e0_noci
 from overlap_derivative import get_s0mat
 from hamiltonian_derivative import get_h0mat
-from h3states.h3_states import *
+from h3states.h3_states import h3_states2
 
 
 h3 = h3_states2()
