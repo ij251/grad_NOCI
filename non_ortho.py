@@ -2,7 +2,8 @@ import numpy as np
 from pyscf import gto, scf, grad
 
 
-def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None, p_tuple = None):
+def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
+                   p_tuple = None):
 
     r"""Calculates the diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -80,11 +81,6 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None, p_
         elif braket == 1:
             # Column replacement
             wxs[:, p] = wxs1[:, p]
-
-    # if np.amax(np.abs(wxs - np.diag(np.diag(wxs)))) <= 1e-10:
-    #     return wxs, w_g, x_g
-
-    # print("wxlambda:\n", wxlambda)
 
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
