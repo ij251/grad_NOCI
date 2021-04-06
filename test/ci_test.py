@@ -46,8 +46,8 @@ g0ghf2 = uhf_to_ghf(g0uhfalpha0, g0uhfbeta0, 1, 1)
 a_g2u2 = [0.9971103, -0.0759676]
 a_g2ug = [1, 0] #???
 
-# g0_list = [g0ghf1, g0ghf2]
-g0_list = [g0ghf1]
+g0_list = [g0ghf1, g0ghf2]
+# g0_list = [g0ghf1]
 g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)
 
 # e1 = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)
