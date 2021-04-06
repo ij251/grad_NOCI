@@ -108,6 +108,7 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
         wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
                                         x_g_t[:, 0:nelec]])
 
+    print("wxlambda0:\n", wxlambda)
     if p_tuple is not None:
         assert sao1 is not None
         p, braket = p_tuple
@@ -124,6 +125,7 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
             # Column replacement
             wxlambda[:, p] = wxlambda1[:, p]
 
+    print("wxlambda:\n", wxlambda)
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
     return wxlambda, w_g_t, x_g_t
