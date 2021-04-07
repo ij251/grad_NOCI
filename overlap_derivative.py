@@ -192,24 +192,10 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     """
 
     omega = np.identity(2)
-    sao0 = mol.intor("int1e_ovlp")
-    sao0 = np.kron(omega, sao0)
+    sao = mol.intor("int1e_ovlp")
+    sao = np.kron(omega, sao)
 
     sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
-    if not complexsymmetric:
-        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao0,
-                                      x_g0[:, 0:nelec]]) #Only occ orbitals
-        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_bra,
-                                          x_g0[:, 0:nelec]])
-        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T.conj(), sao1_ket,
-                                          x_g0[:, 0:nelec]])
-    else:
-        wxsmo0 = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao0,
-                                      x_g0[:, 0:nelec]]) #Only occ orbitals
-        wxsmo1_bra = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_bra,
-                                          x_g0[:, 0:nelec]])
-        wxsmo1_ket = np.linalg.multi_dot([w_g0[:, 0:nelec].T, sao1_ket,
-                                          x_g0[:, 0:nelec]])
 
     # print("sao0:\n", sao0)
     # print("sao1_bra:\n", sao1_bra)
@@ -227,54 +213,36 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     for p in range(nelec):
 
         print("######################\np =", p, "\n######################")
+        #Term A
         wp_g01 = np.copy(w_g0)
-        # print("wp_g01 after copying:\n", wp_g01)
-        wp_g01[:,p] = w_g1[:,p] #Replace pth w_g0 column with w_g1
-        # print("wp_g01 after replacing:\n", wp_g01)
-        wpxlambda01,_,_ = lowdin_pairing(wp_g01, x_g0, mol, nelec,
-                                         complexsymmetric)
+        wp_g01[:, p] = w_g1[:, p] #Replace pth w_g0 column with w_g1
+        wpxlambda01_A, wp_g01_t_A, x_g0_t_A\
+                = lowdin_pairing(wp_g01, x_g0, nelec, sao,
+                                 complexsymmetric)
+        swpx01 = lowdin_prod(wpxlambda01_A, []) #Term A
 
-        swpx01 = lowdin_prod(wpxlambda01, []) #Term A
+        #Term B
+        wpxlambda10_B, w_g0_t_B, x_g0_t_B\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_bra, (p, 0))
 
-        wpxsmo10 = np.copy(wxsmo0)
-        # print("wpxsmo10 after copying:\n", wpxsmo10)
-        wpxsmo10[p,:] = wxsmo1_bra[p,:] #replace pth smo column
-        # print("wpxsmo10 after replacing:\n", wpxsmo10)
-        wpxlambda10,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                         complexsymmetric, wpxsmo10)
+        swpx10 = lowdin_prod(wpxlambda10_B, []) #Term B
 
-        #just another method i played around with of replacing lambda value
-        #after pairing, don't think it works!
-        # lambdatest1B,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-        #                                  complexsymmetric)
-        # lambdatest2B,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-        #                                  complexsymmetric, wxsmo1_bra)
-        # lambdatest3B = np.copy(lambdatest1B)
-        # lambdatest3B[p,:] = lambdatest2B[p,:]
+        #Term D
+        wxplambda10_D, w_g0_t_D, x_g0_t_D\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_ket, (p, 1))
 
-        swpx10 = lowdin_prod(wpxlambda10, []) #Term B
-        # swpx10 = lowdin_prod(lambdatest3B, []) #Term B
+        swxp10 = lowdin_prod(wxplambda10_D, []) #Term D
 
-        wxpsmo10 = np.copy(wxsmo0)
-        wxpsmo10[:,p] = wxsmo1_ket[:,p] #replace pth smo column
-        wxplambda10,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-                                         complexsymmetric, wxpsmo10)
-        # lambdatest1D,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-        #                                  complexsymmetric)
-        # lambdatest2D,_,_ = lowdin_pairing(w_g0, x_g0, mol, nelec,
-        #                                  complexsymmetric, wxsmo1_ket)
-        # lambdatest3D = np.copy(lambdatest1D)
-        # lambdatest3D[p,:] = lambdatest2D[p,:]
-
-        swxp10 = lowdin_prod(wxplambda10, []) #Term D
-        # swxp10 = lowdin_prod(lambdatest3D, []) #Term D
-
+        #Term E
         xp_g01 = np.copy(x_g0)
-        xp_g01[:,p] = x_g1[:,p] #Replace pth w_g0 column with w_g1
-        wxplambda01,_,_ = lowdin_pairing(w_g0, xp_g01, mol, nelec,
-                                        complexsymmetric)
+        xp_g01[:, p] = x_g1[:, p] #Replace pth x_g0 column with x_g1
+        wxplambda01_E, w_g0_t_E, xp_g01_t_E\
+                = lowdin_pairing(w_g0, xp_g01, nelec, sao,
+                                 complexsymmetric)
 
-        swxp01 = lowdin_prod(wxplambda01, []) #Term E
+        swxp01 = lowdin_prod(wxplambda01_E, []) #Term E
 
         swx1 += (swpx01 #A
                  + swpx10 #B
@@ -285,15 +253,6 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         B += swpx10
         D += swxp10
         E += swxp01
-        # print("Lowdin A:\n", wpxlambda01)
-        # print("Lowdin B:\n", wpxlambda10)
-        # print("Lowdin D:\n", wxplambda10)
-        # print("Lowdin E:\n", wxplambda01)
-        # print("A contribution from this p:", swpx01)
-        # print("B contribution from this p:", swpx10)
-        # print("D contribution from this p:", swxp10)
-        # print("E contribution from this p:", swxp01)
-        # print("swx1 cumulative", swx1)
 
     # print("A all contributions:", A)
     # print("B all contributions:", B)
