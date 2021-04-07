@@ -2,6 +2,7 @@ import numpy as np
 from pyscf import gto, scf, grad
 from cphf.first_order_ghf import g1_iteration
 from overlap_derivative import get_g1_list, get_s1mat
+from hamiltonian_derivative import get_swx1_bang
 from h3states.h3_states import h3_states2
 
 
@@ -23,6 +24,9 @@ g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)
 
 s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
 print("s1mat:\n", s1mat)
+# s011 = get_swx1_bang(mol, atom, coord, g00, g10, g1_list[0], g1_list[1],
+#                      nelec, False)
+# print(s011)
 
 # lambda0_01,_,_ = lowdin_pairing0(g00, g10, mol, nelec, False)
 # print(lambda0_01)

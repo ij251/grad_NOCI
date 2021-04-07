@@ -144,6 +144,7 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     else:
         wxlambda = np.linalg.multi_dot([w_g_s_t.T, x_g_s_t])
 
+    print("wxlambda:\n", wxlambda)
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
     if braket == 0:

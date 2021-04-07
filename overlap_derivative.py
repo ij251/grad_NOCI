@@ -205,11 +205,6 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     # print("wxsmo1_ket:\n", wxsmo1_ket)
     swx1 = 0
 
-    A=0
-    B=0
-    D=0
-    E=0
-
     for p in range(nelec):
 
         print("######################\np =", p, "\n######################")
@@ -222,14 +217,14 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         swpx01 = lowdin_prod(wpxlambda01_A, []) #Term A
 
         #Term B
-        wpxlambda10_B, w_g0_t_B, x_g0_t_B\
+        wpxlambda10_B, w_g0_t_B, x_g0_t_B,_\
                 = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
                                  sao1_bra, (p, 0))
 
         swpx10 = lowdin_prod(wpxlambda10_B, []) #Term B
 
         #Term D
-        wxplambda10_D, w_g0_t_D, x_g0_t_D\
+        wxplambda10_D, w_g0_t_D, x_g0_t_D,_\
                 = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
                                  sao1_ket, (p, 1))
 
@@ -249,12 +244,6 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                  + swxp10 #D
                  + swxp01) #E
 
-        A += swpx01
-        B += swpx10
-        D += swxp10
-        E += swxp01
-
-    # print("A all contributions:", A)
     # print("B all contributions:", B)
     # print("D all contributions:", D)
     # print("E all contributions:", E)

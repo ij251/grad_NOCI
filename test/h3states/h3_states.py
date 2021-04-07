@@ -5,8 +5,8 @@ from cphf.zeroth_order_ghf import *
 
 'h3 uhf noci states'
 
-g0alpha0 = np.loadtxt("test/h3states/state0_a")
-g0beta0 = np.loadtxt("test/h3states/state0_b")
+g0alpha0 = np.loadtxt("h3states/state0_a")
+g0beta0 = np.loadtxt("h3states/state0_b")
 # g0alpha0 = np.array([[0.431728, -0.325562, 1.628633],
 #                      [0.315151, 1.068455, -0.186595],
 #                      [0.430280, -0.481068, -1.525352]])
@@ -16,8 +16,8 @@ g0beta0 = np.loadtxt("test/h3states/state0_b")
 #                     [0.473328, -0.471677, -1.515503]])
 
 
-g0alpha1 = np.loadtxt("test/h3states/state1_a")
-g0beta1 = np.loadtxt("test/h3states/state1_b")
+g0alpha1 = np.loadtxt("h3states/state1_a")
+g0beta1 = np.loadtxt("h3states/state1_b")
 # g0alpha1 = np.array([[-0.413134, 1.627175, 0.355595],
 #                      [0.993907, -0.175383, 0.507073],
 #                      [-0.538985, -1.528109, 0.342997]])
@@ -27,8 +27,8 @@ g0beta1 = np.loadtxt("test/h3states/state1_b")
 #                     [-1.526603, 0.357070, -0.534090]])
 
 
-g0alpha2 = np.loadtxt("test/h3states/state2_a")
-g0beta2 = np.loadtxt("test/h3states/state2_b")
+g0alpha2 = np.loadtxt("h3states/state2_a")
+g0beta2 = np.loadtxt("h3states/state2_b")
 
 # g0alpha2 = np.array([[0.512116, 1.626205, -0.194988],
 #                      [0.172477, -0.240733, 1.089970],
@@ -38,8 +38,8 @@ g0beta2 = np.loadtxt("test/h3states/state2_b")
 #                     [0.606218, 0.935777, -0.180431],
 #                     [0.285625, -0.579312, -1.525150]])
 
-g0alpha3 = np.loadtxt("test/h3states/state3_a")
-g0beta3 = np.loadtxt("test/h3states/state3_b")
+g0alpha3 = np.loadtxt("h3states/state3_a")
+g0beta3 = np.loadtxt("h3states/state3_b")
 
 # g0alpha3 = np.array([[0.525621, 0.022494, 1.633415],
 #                      [0.019427, 1.077924, -0.366805],
