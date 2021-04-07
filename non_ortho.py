@@ -80,14 +80,15 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
         wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao0,
                                    x_g[:, 0:nelec]])
 
+    print("wxs before:\n", wxs)
     if p_tuple is not None:
         assert sao1 is not None
         if not complexsymmetric:
             wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao1,
-                                       x_g[:, 0:nelec]]) #Only occ orbitals
+                                        x_g[:, 0:nelec]]) #Only occ orbitals
         else:
             wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao1,
-                                       x_g[:, 0:nelec]])
+                                        x_g[:, 0:nelec]])
 
         p, braket = p_tuple
         if braket == 0: #Row replacement when bra differentiated
@@ -95,6 +96,7 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
         elif braket == 1: #Column replacement when ket differentiated
             wxs[:,p] = wxs1[:,p]
 
+    print("wxs after:\n", wxs)
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
     det_wxu = np.linalg.det(wxu)
@@ -114,12 +116,21 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
 
     x_g_t = np.dot(x_g[:,0:nelec], wxv)
 
+    # if not complexsymmetric:
+    #     wxlambda = np.linalg.multi_dot([wxu.T.conj(), wxs,
+    #                                     wxv])
+    # else:
+    #     wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao0,
+    #                                     x_g_t[:, 0:nelec]])
+
     if not complexsymmetric:
         wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao0,
                                         x_g_t[:, 0:nelec]])
     else:
         wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao0,
                                         x_g_t[:, 0:nelec]])
+
+    print("wxlambda0:\n", wxlambda)
 
     if p_tuple is not None:
         assert sao1 is not None
