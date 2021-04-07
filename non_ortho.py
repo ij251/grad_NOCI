@@ -100,7 +100,10 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     p, braket = p_tuple
     if braket == 0:
         w_g_s = np.dot(sao, w_g[:, 0:nelec])
-        w_g_s[:, p:p+1] = np.dot(sao1, w_g[:, p:p+1])
+        if not complexsymmetric:
+            w_g_s[:, p:p+1] = np.dot(sao1.conj().T, w_g[:, p:p+1])
+        else:
+            w_g_s[:, p:p+1] = np.dot(sao1.T, w_g[:, p:p+1])
         x_g_s = x_g[:, 0:nelec]
     else:
         w_g_s = w_g[:, 0:nelec]
@@ -112,15 +115,6 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     else:
         wxs = np.dot(w_g_s.T, x_g_s)
 
-    # print(f"wxs inside Lowdin pairing after replacement p {p}:\n", wxs)
-    # if np.amax(np.abs(wxs - np.diag(np.diag(wxs)))) <= 1e-10:
-    #     if braket == 0:
-    #         g_t_p = np.dot(w_g[:, p:p+1], np.identity(nelec)[p:p+1, :])
-    #     else:
-    #         g_t_p = np.dot(x_g[:, p:p+1], np.identity(nelec)[p:p+1, :])
-
-    #     return wxs, w_g, x_g, g_t_p
-
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
     det_wxu = np.linalg.det(wxu)
@@ -128,9 +122,9 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     wxu[0, :] *= det_wxu.conj() #Removes phase induced by unitary transform
     wxv[0, :] *= det_wxv.conj()
 
-    assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
+    assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(nelec),
                        rtol = 1.e-5, atol = 1.e-8) #Check Unitary
-    assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
+    assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(nelec),
                        rtol = 1.e-5, atol = 1.e-8)
 
     if not complexsymmetric:
@@ -148,7 +142,6 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     else:
         wxlambda = np.linalg.multi_dot([w_g_s_t.T, x_g_s_t])
 
-    print("wxlambda:\n", wxlambda)
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
     if braket == 0:

@@ -244,6 +244,205 @@ def get_onewx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec,
     return onewx0
 
 
+def get_swx1_bang(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
+                  complexsymmetric: bool):
+
+    r"""Calculates the first order one electron contribution to the
+    hamiltonian element between determinants w and x by first expanding
+    spin orbitals to first order then lowdin pairing to simplify and
+    calculate matrix element.
+
+    .. math::
+
+            \sum\limits_{m=1}^{N_e}\langle\prescript{w}{}\Psi
+            |\hat{h}(\mathbf{r}_m)|\prescript{x}{}\Psi\rangle
+            =  h_{\delta\mu, \gamma\nu}\sum\limits_{m=1}^{N_e}
+            \left(\prod\limits_{i\not =m}^{N_e}
+            \prescript{wx}{}\lambda_{i}\right)
+            \prescript{xw}{}P_m^{\gamma\nu, \delta\mu}
+
+    Terms A and E are due to the part of the first order spin orbitals which
+    are zeroth order AO basis functions expanded using first order MO
+    coefficients. We define :math:'^{w_p x}\Psi^{01}' and
+    :math:'^{w x_p}\Psi^{01}'determinants where the the pth column
+    of the zeroth order MO coefficient matrix has been replaced with the pth
+    column of the first order MO coefficient matrix then Lowdin pair.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p in a sum over p from 1 to the number of
+    electrons.
+
+    Terms B and D are due to the part of the first order spin orbitals which
+    are first order AO basis functions expanded using zeroth order MO
+    coefficients. This is achieved by defining modified atomic orbital overlap
+    matrices in which a row or column has been replaced by the corresponding
+    overlap where either the bra or ket AO function has been differentiated,
+    and using these overlap matrices in Lowdin pairing with the zeroth order
+    MO coefficient matrices.
+    Once pairing is done the matrix element is calculated as for the zeroth
+    order case above for each p, except we must now consider that the pth spin
+    orbital is expanded in first order AO basis functions, so for the m=p term
+    in the sum over m the zeroth order core hamiltonian matrix is replaced
+    with the matrix in which either the bra or ket of each element has been
+    differentiated.
+
+    Term C does contribute here because the operator is a function of nuclear
+    coordinate, and this is found as above (no sum over p) but replacing the
+    zeroth order core hamiltonian matrix with the matrix in which the operator
+    has been differentiated.
+
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param atom: Input for which atom is being perturbed, with atoms numbered
+            according to the PySCF molecule.
+    :param coord: Input for along which coordinate the pertubation of the atom
+            lies.
+            coord = '0' for x
+                    '1' for y
+                    '2' for z
+    :param w_g0: The zeroth order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g0: The zeroth order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param w_g1: The first order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g1: The first order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+
+    :returns: Value for one electron contribution to hamiltonian element
+            derivative.
+    """
+
+    omega = np.identity(2)
+    sao0 = mol.intor("int1e_ovlp")
+    sao0 = np.kron(omega, sao0)
+
+    sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
+
+    onewx1 = 0
+
+    for p in range(nelec):
+
+        print("\n")
+        print("#######################\np =", p, "\n#######################")
+        onewpx01 = 0 #Term A
+        onewpx10 = 0 #Term B
+        onewxp10 = 0 #Term D
+        onewxp01 = 0 #Term E
+
+        # Lowdin pairing for the various terms
+        omega = np.identity(2)
+        sao = mol.intor("int1e_ovlp")
+        sao = np.kron(omega, sao)
+
+        #Term A
+        wp_g01 = np.copy(w_g0)
+        wp_g01[:, p] = w_g1[:, p] #Replace pth w_g0 column with w_g1
+        print("Lowdin A")
+        wpxlambda01_A, wp_g01_t_A, x_g0_t_A\
+                = lowdin_pairing(wp_g01, x_g0, nelec, sao,
+                                 complexsymmetric)
+
+        #Term B
+        print("Lowdin B")
+        wpxlambda10_B, w_g0_t_B, x_g0_t_B, w_g_t_p_B\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_bra, (p, 0))
+        print("wpxlambda10_B:\n", wpxlambda10_B)
+        print("w_g0_t_B:\n", w_g0_t_B)
+        print("x_g0_t_B:\n", x_g0_t_B)
+
+        #Term D
+        print("Lowdin D")
+        wxplambda10_D, w_g0_t_D, x_g0_t_D, x_g_t_p_D\
+                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+                                 sao1_ket, (p, 1))
+        print("wxplambda10_D:\n", wpxlambda10_B)
+        print("w_g0_t_D:\n", w_g0_t_D)
+        print("x_g0_t_D:\n", x_g0_t_D)
+        print("x_g_t_p_D:\n", x_g_t_p_D)
+
+        #Term E
+        print("Lowdin E")
+        xp_g01 = np.copy(x_g0)
+        xp_g01[:, p] = x_g1[:, p] #Replace pth x_g0 column with x_g1
+        wxplambda01_E, w_g0_t_E, xp_g01_t_E\
+                = lowdin_pairing(w_g0, xp_g01, nelec, sao,
+                                 complexsymmetric)
+
+        for m in range(nelec):
+
+            print("==================\nm =", m, "\n==================")
+
+            # Term A
+            wpxlowdin_prod01 = lowdin_prod(wpxlambda01_A, [m])
+            xwp_p01_A = get_xw_p(wp_g01_t_A, x_g0_t_A, m, complexsymmetric)
+
+            onewpx01 += wpxlowdin_prod01 * np.einsum("ij,ji->", sao0,
+                                                     xwp_p01_A)
+
+            # Term B
+            wpxlowdin_prod10 = lowdin_prod(wpxlambda10_B, [m])
+            print(f"Reduced overlap B term for m = {m}:", wpxlowdin_prod10)
+            xwp_p10_m_B = get_xw_p(w_g0_t_B, x_g0_t_B, m, complexsymmetric)
+            xwp_p10_p_B = get_xw_p(w_g_t_p_B, x_g0_t_B, m, complexsymmetric)
+
+            hom_term = np.einsum("ij,ji->", sao0, xwp_p10_m_B)
+            het_term = np.einsum("ij,ji->", (sao1_bra - sao0), xwp_p10_p_B)
+            onewpx10 += wpxlowdin_prod10 * (hom_term + het_term)
+            print(f"B hom term from m = {m}:", hom_term)
+            print(f"B het term from m = {m}:", het_term)
+            print(f"Contribution to B from m = {m}:", wpxlowdin_prod10 * (hom_term + het_term))
+
+            # Term D
+            wxplowdin_prod10 = lowdin_prod(wxplambda10_D, [m])
+            print(f"Reduced overlap D term for m = {m}:", wxplowdin_prod10)
+            xpw_p10_m_D = get_xw_p(w_g0_t_D, x_g0_t_D, m, complexsymmetric)
+            xpw_p10_p_D = get_xw_p(w_g0_t_D, x_g_t_p_D, m, complexsymmetric)
+
+            hom_term = np.einsum("ij,ji->", sao0, xpw_p10_m_D)
+            het_term = np.einsum("ij,ji->", (sao1_ket - sao0), xpw_p10_p_D)
+            onewxp10 += wxplowdin_prod10 * (hom_term + het_term)
+            print(f"D hom term from m = {m}:", hom_term)
+            print(f"D het term from m = {m}:", het_term)
+            print(f"Contribution to D from m = {m}:", wxplowdin_prod10 * (hom_term + het_term))
+
+            # if m == p:
+            #     onewxp10 += wxplowdin_prod10 * np.einsum("ij,ji->",
+            #                                              hcore1_ket,
+            #                                              xpw_p10_D)
+            # else:
+            #     onewxp10 += wxplowdin_prod10 * np.einsum("ij,ji->",
+            #                                              hcore0,
+            #                                              xpw_p10_D)
+
+            # Term E
+            wxplowdin_prod01 = lowdin_prod(wxplambda01_E, [m])
+            xpw_p01_E = get_xw_p(w_g0_t_E, xp_g01_t_E, m, complexsymmetric)
+            onewxp01 += wxplowdin_prod01 * np.einsum("ij,ji->", sao0,
+                                                     xpw_p01_E)
+
+
+            # print("A lowdin:\n", wpxlambda01_A)
+            # print("D lowdin:\n", wxplambda10_D)
+            # print("E lowdin:\n", wxplambda01_E)
+
+        onewx1 += onewpx01 + onewpx10 + onewxp10 + onewxp01
+
+        print("")
+        print(f"A contribution 1e from p = {p}:", onewpx01)
+        print(f"B contribution 1e from p = {p}:", onewpx10)
+        print(f"D contribution 1e from p = {p}:", onewxp10)
+        print(f"E contribution 1e from p = {p}:", onewxp01)
+
+    print("swx1:", onewx1)
+    return onewx1
+
+
+
 def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                complexsymmetric: bool):
 
@@ -418,6 +617,8 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
             hom_term = np.einsum("ij,ji->", hcore0, xwp_p10_m_B)
             het_term = np.einsum("ij,ji->", (hcore1_bra - hcore0), xwp_p10_p_B)
             onewpx10 += wpxlowdin_prod10 * (hom_term + het_term)
+            print(f"B hom term from m = {m}:", hom_term)
+            print(f"B het term from m = {m}:", het_term)
             print(f"Contribution to B from m = {m}:", wpxlowdin_prod10 * (hom_term + het_term))
 
             # Term D
@@ -429,6 +630,8 @@ def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
             hom_term = np.einsum("ij,ji->", hcore0, xpw_p10_m_D)
             het_term = np.einsum("ij,ji->", (hcore1_ket - hcore0), xpw_p10_p_D)
             onewxp10 += wxplowdin_prod10 * (hom_term + het_term)
+            print(f"D hom term from m = {m}:", hom_term)
+            print(f"D het term from m = {m}:", het_term)
             print(f"Contribution to D from m = {m}:", wxplowdin_prod10 * (hom_term + het_term))
 
             # if m == p:
@@ -902,16 +1105,18 @@ def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
     nnoci = len(g0_list)
     h1mat = np.zeros((nnoci,nnoci))
 
-    # for w in range(nnoci):
-    #     for x in range(nnoci):
-    for w in [0]:
-        for x in [1]:
+    for w in range(nnoci):
+        for x in range(nnoci):
+    # for w in [1]:
+    #     for x in [0]:
 
             w_g0 = g0_list[w]
             x_g0 = g0_list[x]
             w_g1 = g1_list[w]
             x_g1 = g1_list[x]
             print("###################\n(w, x)=", w, x, "\n###################")
+            swx1 = get_swx1_bang(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
+                                 nelec, complexsymmetric)
             onewx1 = get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                 nelec, complexsymmetric)
             # twowx1 = get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
