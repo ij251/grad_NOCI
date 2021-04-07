@@ -58,40 +58,74 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None, p_
             determinant.
     """
 
-    if not complexsymmetric:
-        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
-                                   x_g[:, 0:nelec]])
-    else:
-        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
-                                   x_g[:, 0:nelec]])
-
-    if p_tuple is not None:
-        assert sao1 is not None
-        p, braket = p_tuple
+    if p_tuple is None:
         if not complexsymmetric:
-            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao1,
-                                        x_g[:, 0:nelec]])
+            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
+                                       x_g[:, 0:nelec]])
         else:
-            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao1,
-                                    x_g[:, 0:nelec]])
-        if braket == 0:
-            # Row replacement
-            wxs[p, :] = wxs1[p, :]
-        elif braket == 1:
-            # Column replacement
-            wxs[:, p] = wxs1[:, p]
+            wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
+                                       x_g[:, 0:nelec]])
 
+        wxu,_,wxvh = np.linalg.svd(wxs)
+        wxv = wxvh.T.conj()
+        det_wxu = np.linalg.det(wxu)
+        det_wxv = np.linalg.det(wxv)
+        wxu[0, :] *= det_wxu.conj() #Removes phase induced by unitary transform
+        wxv[0, :] *= det_wxv.conj()
+
+        assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
+                           rtol = 1.e-5, atol = 1.e-8) #Check Unitary
+        assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(wxv.shape[0]),
+                           rtol = 1.e-5, atol = 1.e-8)
+
+        if not complexsymmetric:
+            w_g_t = np.dot(w_g[:,0:nelec], wxu)
+        else:
+            w_g_t = np.dot(w_g[:,0:nelec], wxu.conj())
+
+        x_g_t = np.dot(x_g[:,0:nelec], wxv)
+
+        if not complexsymmetric:
+            wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao,
+                                            x_g_t[:, 0:nelec]])
+        else:
+            wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
+                                            x_g_t[:, 0:nelec]])
+        assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
+        return wxlambda, w_g_t, x_g_t
+
+    # p_tuple is not None
+    assert sao1 is not None
+    p, braket = p_tuple
+    if braket == 0:
+        w_g_s = np.dot(sao, w_g[:, 0:nelec])
+        w_g_s[:, p:p+1] = np.dot(sao1, w_g[:, p:p+1])
+        x_g_s = x_g[:, 0:nelec]
+    else:
+        w_g_s = w_g[:, 0:nelec]
+        x_g_s = np.dot(sao, x_g[:, 0:nelec])
+        x_g_s[:, p:p+1] = np.dot(sao1, x_g[:, p:p+1])
+
+    if not complexsymmetric:
+        wxs = np.dot(w_g_s.T.conj(), x_g_s)
+    else:
+        wxs = np.dot(w_g_s.T, x_g_s)
+
+    # print(f"wxs inside Lowdin pairing after replacement p {p}:\n", wxs)
     # if np.amax(np.abs(wxs - np.diag(np.diag(wxs)))) <= 1e-10:
-    #     return wxs, w_g, x_g
+    #     if braket == 0:
+    #         g_t_p = np.dot(w_g[:, p:p+1], np.identity(nelec)[p:p+1, :])
+    #     else:
+    #         g_t_p = np.dot(x_g[:, p:p+1], np.identity(nelec)[p:p+1, :])
 
-    # print("wxlambda:\n", wxlambda)
+    #     return wxs, w_g, x_g, g_t_p
 
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
     det_wxu = np.linalg.det(wxu)
     det_wxv = np.linalg.det(wxv)
-    wxu[:,0] *= det_wxu.conj() #Removes phase induced by unitary transform
-    wxv[:,0] *= det_wxv.conj()
+    wxu[0, :] *= det_wxu.conj() #Removes phase induced by unitary transform
+    wxv[0, :] *= det_wxv.conj()
 
     assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
                        rtol = 1.e-5, atol = 1.e-8) #Check Unitary
@@ -99,38 +133,85 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None, p_
                        rtol = 1.e-5, atol = 1.e-8)
 
     if not complexsymmetric:
-        w_g_t = np.dot(w_g[:,0:nelec], wxu)
+        w_g_s_t = np.dot(w_g_s, wxu)
+        w_g_t = np.dot(w_g[:, 0:nelec], wxu)
     else:
-        w_g_t = np.dot(w_g[:,0:nelec], wxu.conj())
+        w_g_s_t = np.dot(w_g_s, wxu.conj())
+        w_g_t = np.dot(w_g[:, 0:nelec], wxu.conj())
 
-    x_g_t = np.dot(x_g[:,0:nelec], wxv)
+    x_g_s_t = np.dot(x_g_s, wxv)
+    x_g_t = np.dot(x_g[:, 0:nelec], wxv)
 
     if not complexsymmetric:
-        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao,
-                                        x_g_t[:, 0:nelec]])
+        wxlambda = np.linalg.multi_dot([w_g_s_t.T.conj(), x_g_s_t])
     else:
-        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
-                                        x_g_t[:, 0:nelec]])
-
-    if p_tuple is not None:
-        assert sao1 is not None
-        p, braket = p_tuple
-        if not complexsymmetric:
-            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao1,
-                                             x_g_t[:, 0:nelec]])
-        else:
-            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao1,
-                                             x_g_t[:, 0:nelec]])
-        if braket == 0:
-            # Row replacement
-            wxlambda[p, :] = wxlambda1[p, :]
-        elif braket == 1:
-            # Column replacement
-            wxlambda[:, p] = wxlambda1[:, p]
+        wxlambda = np.linalg.multi_dot([w_g_s_t.T, x_g_s_t])
 
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
-    return wxlambda, w_g_t, x_g_t
+    if braket == 0:
+        g_t_p = np.dot(w_g[:, p:p+1], wxu[p:p+1, :])
+    else:
+        g_t_p = np.dot(x_g[:, p:p+1], wxv[p:p+1, :])
+
+    return wxlambda, w_g_t, x_g_t, g_t_p
+
+#     assert sao1 is not None
+#     p, braket = p_tuple
+#     if braket == 0:
+#         w_g_t[:, p] *= det_wxu.conj() #Removes phase induced by unitary transform
+#     else:
+#         x_g_t[:, p] *= det_wxv.conj()
+
+#     if braket == 0:
+#         if not complexsymmetric:
+#             w_g_t_i = np.dot(w_g[:, 0:nelec], wxu)
+#             w_g_t_p = np.dot(w_g[:, p:p+1], wxu[p:p+1, :])
+#             w_g_t_nop = w_g_t_i - w_g_t_p
+#             print("w_g:\n", w_g[:, 0:nelec])
+#             print("wxu:\n", wxu)
+#             print("w_g[:, p:p+1]:\n", w_g[:, p:p+1])
+#             print("w_g_t_i:\n", w_g_t_i)
+#             print("w_g_t_p:\n", w_g_t_p)
+#             print("w_g_t_nop:\n", w_g_t_nop)
+#             wxlambda0 = np.linalg.multi_dot([w_g_t_nop[:, 0:nelec].T.conj(), sao,
+#                                              x_g_t[:, 0:nelec]])
+#             wxlambda1 = np.linalg.multi_dot([w_g_t_p[:, 0:nelec].T.conj(), sao1,
+#                                              x_g_t[:, 0:nelec]])
+#         else:
+#             w_g_t_i = np.matmul(w_g[:, 0:nelec], wxu.conj())
+#             w_g_t_p = np.matmul(w_g[:, p:p+1], wxu[p:p+1, :].conj())
+#             w_g_t_nop = w_g_t_i - w_g_t_p
+#             wxlambda0 = np.linalg.multi_dot([w_g_t_nop[:, 0:nelec].T, sao,
+#                                              x_g_t[:, 0:nelec]])
+#             wxlambda1 = np.linalg.multi_dot([w_g_t_p[:, 0:nelec].T, sao1,
+#                                              x_g_t[:, 0:nelec]])
+
+#         print("wxlambda0:\n", wxlambda0)
+#         print("wxlambda1:\n", wxlambda1)
+
+#     elif braket == 1:
+#         x_g_t_i = np.matmul(x_g[:, 0:nelec], wxv)
+#         x_g_t_p = np.matmul(x_g[:, p:p+1], wxv[p:p+1, :])
+#         x_g_t_nop = x_g_t_i - x_g_t_p
+#         if not complexsymmetric:
+#             wxlambda0 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao,
+#                                              x_g_t_nop[:, 0:nelec]])
+#             wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao1,
+#                                               x_g_t_p[:, 0:nelec]])
+#         else:
+#             wxlambda0 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
+#                                              x_g_t_nop[:, 0:nelec]])
+#             wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao1,
+#                                              x_g_t_p[:, 0:nelec]])
+
+#     wxlambda = wxlambda0 + wxlambda1
+
+#     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
+
+#     print("wxlambda final:\n", wxlambda)
+
+#     return wxlambda, w_g_t, x_g_t
 
 
 def lowdin_prod(wxlambda, rmind):
