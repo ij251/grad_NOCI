@@ -97,12 +97,14 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
 
     # p_tuple is not None
     assert sao1 is not None
+    print("sao1:\n", sao1)
     p, braket = p_tuple
     if braket == 0:
-        w_g_s = np.dot(sao, w_g[:, 0:nelec])
         if not complexsymmetric:
+            w_g_s = np.dot(sao.conj().T, w_g[:, 0:nelec])
             w_g_s[:, p:p+1] = np.dot(sao1.conj().T, w_g[:, p:p+1])
         else:
+            w_g_s = np.dot(sao.T, w_g[:, 0:nelec])
             w_g_s[:, p:p+1] = np.dot(sao1.T, w_g[:, p:p+1])
         x_g_s = x_g[:, 0:nelec]
     else:
