@@ -71,8 +71,8 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
         wxv = wxvh.T.conj()
         det_wxu = np.linalg.det(wxu)
         det_wxv = np.linalg.det(wxv)
-        wxu[0, :] *= det_wxu.conj() #Removes phase induced by unitary transform
-        wxv[0, :] *= det_wxv.conj()
+        wxu[:,0] *= det_wxu.conj() #Removes phase induced by unitary transform
+        wxv[:,0] *= det_wxv.conj()
 
         assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(wxu.shape[0]),
                            rtol = 1.e-5, atol = 1.e-8) #Check Unitary
@@ -97,7 +97,7 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
 
     # p_tuple is not None
     assert sao1 is not None
-    print("sao1:\n", sao1)
+    # print("sao1:\n", sao1)
     p, braket = p_tuple
     if braket == 0:
         if not complexsymmetric:
@@ -121,8 +121,8 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     wxv = wxvh.T.conj()
     det_wxu = np.linalg.det(wxu)
     det_wxv = np.linalg.det(wxv)
-    wxu[0, :] *= det_wxu.conj() #Removes phase induced by unitary transform
-    wxv[0, :] *= det_wxv.conj()
+    wxu[:, 0] *= det_wxu.conj() #Removes phase induced by unitary transform
+    wxv[:, 0] *= det_wxv.conj()
 
     assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(nelec),
                        rtol = 1.e-5, atol = 1.e-8) #Check Unitary
@@ -144,7 +144,7 @@ def lowdin_pairing(w_g, x_g, nelec, sao, complexsymmetric: bool, sao1 = None,
     else:
         wxlambda = np.linalg.multi_dot([w_g_s_t.T, x_g_s_t])
 
-    print("wxlambda:\n", wxlambda)
+    # print("wxlambda:\n", wxlambda)
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
     if braket == 0:

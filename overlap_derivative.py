@@ -68,14 +68,17 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     :returns: Matrix of overlaps between determinants.
     """
 
+    omega = np.identity(2)
+    sao = mol.intor("int1e_ovlp")
+    sao = np.kron(omega, sao)
     nnoci = len(g0_list)
     s0mat = np.zeros((nnoci,nnoci))
 
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = lowdin_pairing(g0_list[w], g0_list[x], mol,
-                                       nelec, complexsymmetric)[0]
+            wxlambda0 = lowdin_pairing(g0_list[w], g0_list[x], nelec,
+                                       sao, complexsymmetric)[0]
 
             s0mat[w,x] += get_swx0(wxlambda0)
 
