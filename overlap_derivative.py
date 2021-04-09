@@ -33,7 +33,7 @@ def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
     return g1_list
 
 
-def get_swx0(wxlambda0):
+def get_swx0(mol, w_g0, x_g0, nelec, complexsymmetric):
 
     r"""Calculates the overlap between deteminants w and x.
 
@@ -47,6 +47,8 @@ def get_swx0(wxlambda0):
     :returns: Numerical value for overlap.
     """
 
+    sao = np.kron(np.identity(2), mol.intor("int1e_ovlp"))
+    wxlambda0,_,_ = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric)
     swx0 = lowdin_prod(wxlambda0, [])
 
     return swx0
