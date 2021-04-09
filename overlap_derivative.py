@@ -1,7 +1,7 @@
 import numpy as np
 from pyscf import gto, scf, grad
 from cphf.first_order_ghf import g1_iteration, get_s1
-from non_ortho import lowdin_prod, lowdin_pairing
+from non_ortho import lowdin_prod, lowdin_pairing, lowdin_pairing1_p
 
 
 def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):
@@ -41,14 +41,22 @@ def get_swx0(mol, w_g0, x_g0, nelec, complexsymmetric):
 
             S_{wx} = \prod\limits_i^{N_e}\prescript{wx}{}\lambda_i
 
-    :param wxlambda0: Diagonal matrix of Löwdin singular values for the wth
-            and xth determinant.
+    :param mol: The pyscf molecule class, from which the nuclear coordinates
+            and atomic numbers are taken.
+    :param w_g0: The zeroth order molecular orbital coefficient matrix of the
+            wth determinant.
+    :param x_g0: The zeroth order molecular orbital coefficient matrix of the
+            xth determinant.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
 
     :returns: Numerical value for overlap.
     """
 
     sao = np.kron(np.identity(2), mol.intor("int1e_ovlp"))
-    wxlambda0,_,_ = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric)
+    wxlambda0,_,_ = lowdin_pairing(w_g0, x_g0, sao, nelec, complexsymmetric)
     swx0 = lowdin_prod(wxlambda0, [])
 
     return swx0
@@ -79,10 +87,8 @@ def get_s0mat(mol, g0_list, nelec, complexsymmetric):
     for w in range(nnoci):
         for x in range(nnoci):
 
-            wxlambda0 = lowdin_pairing(g0_list[w], g0_list[x], nelec,
-                                       sao, complexsymmetric)[0]
-
-            s0mat[w,x] += get_swx0(wxlambda0)
+            s0mat[w,x] = get_swx0(mol, g0_list[w], g0_list[x], nelec,
+                                  complexsymmetric)
 
     return s0mat
 
@@ -201,36 +207,28 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
     sao = np.kron(omega, sao)
 
     sao1_bra, sao1_ket = get_sao1_partial(mol, atom, coord)
-
-    # print("sao0:\n", sao0)
-    # print("sao1_bra:\n", sao1_bra)
-    # print("sao1_ket:\n", sao1_ket)
-    # print("wxsmo0:\n", wxsmo0)
-    # print("wxsmo1_bra:\n", wxsmo1_bra)
-    # print("wxsmo1_ket:\n", wxsmo1_ket)
     swx1 = 0
 
     for p in range(nelec):
 
-        print("######################\np =", p, "\n######################")
         #Term A
         wp_g01 = np.copy(w_g0)
         wp_g01[:, p] = w_g1[:, p] #Replace pth w_g0 column with w_g1
-        wpxlambda01_A, wp_g01_t_A, x_g0_t_A\
-                = lowdin_pairing(wp_g01, x_g0, nelec, sao,
+        wpxlambda01_A,_,_\
+                = lowdin_pairing(wp_g01, x_g0, sao, nelec,
                                  complexsymmetric)
         swpx01 = lowdin_prod(wpxlambda01_A, []) #Term A
 
         #Term B
-        wpxlambda10_B, w_g0_t_B, x_g0_t_B,_\
-                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+        wpxlambda10_B,_,_,_\
+                = lowdin_pairing1_p(w_g0, x_g0, sao, nelec, complexsymmetric,
                                  sao1_bra, (p, 0))
 
         swpx10 = lowdin_prod(wpxlambda10_B, []) #Term B
 
         #Term D
-        wxplambda10_D, w_g0_t_D, x_g0_t_D,_\
-                = lowdin_pairing(w_g0, x_g0, nelec, sao, complexsymmetric,
+        wxplambda10_D,_,_,_\
+                = lowdin_pairing1_p(w_g0, x_g0, sao, nelec, complexsymmetric,
                                  sao1_ket, (p, 1))
 
         swxp10 = lowdin_prod(wxplambda10_D, []) #Term D
@@ -238,8 +236,8 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
         #Term E
         xp_g01 = np.copy(x_g0)
         xp_g01[:, p] = x_g1[:, p] #Replace pth x_g0 column with x_g1
-        wxplambda01_E, w_g0_t_E, xp_g01_t_E\
-                = lowdin_pairing(w_g0, xp_g01, nelec, sao,
+        wxplambda01_E,_,_\
+                = lowdin_pairing(w_g0, xp_g01, sao, nelec,
                                  complexsymmetric)
 
         swxp01 = lowdin_prod(wxplambda01_E, []) #Term E
@@ -248,11 +246,6 @@ def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,
                  + swpx10 #B
                  + swxp10 #D
                  + swxp01) #E
-
-    # print("B all contributions:", B)
-    # print("D all contributions:", D)
-    # print("E all contributions:", E)
-    # print("total swx1", swx1)
 
     return swx1
 
@@ -290,13 +283,10 @@ def get_s1mat(mol, atom, coord, g0_list, g1_list, nelec,
     for w in range(nnoci):
         for x in range(nnoci):
 
-            # if w == x:
-            #     continue
             w_g0 = g0_list[w]
             x_g0 = g0_list[x]
             w_g1 = g1_list[w]
             x_g1 = g1_list[x]
-            print("##################\n(w,x) =", w,x, "\n##################")
 
             s1mat[w,x] += get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1,
                                    nelec, complexsymmetric)
