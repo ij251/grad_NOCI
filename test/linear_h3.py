@@ -4,10 +4,10 @@ from cphf.first_order_ghf import g1_iteration, write_e1_single
 from overlap_derivative import get_s1mat, get_g1_list
 from hamiltonian_derivative import get_h1mat
 from energy_derivative import get_e1_noci
-from h3states.h3_states import h3_states2, h3_states4
+from h3states.h3_states import h3_states2, h3_states4, h3_states2_linear
 
 
-h3 = h3_states2()
+h3 = h3_states2_linear()
 # h3 = h3_states4()
 mol = h3.mol
 nelec = h3.nelec
@@ -34,3 +34,4 @@ e1_noci = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)
 print("e1_noci:\n", e1_noci)
 # e1_scf = write_e1_single(mol, nelec, atom, coord, False, g00)
 # print("e1_scf for g00 state:\n", e1_scf)
+

@@ -26,3 +26,12 @@ Hamiltonian matrix derivative:
 [-0.17023, 0.00997]
 [0.00997, -0.33101]
 
+numerical One electron contributions:
+
+[0.5056043, -0.00355847468]
+[-0.00355847468, 0.2135186]
+
+Two electron numerical derivative contrubution
+
+[-0.2482573, 0.01290487]
+[0.01290487, -0.1180423]

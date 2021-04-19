@@ -2,8 +2,7 @@ import numpy as np
 from pyscf import gto, scf, grad
 
 
-def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
-                   sao1=None):
+def lowdin_pairing(w_g, x_g, sao, nelec, complexsymmetric: bool):
 
     r"""Calculates the diagonal matrix of singular values,
     calculated from a singular value decomposition of the molecular orbital
@@ -45,50 +44,23 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
             determinant.
     :param x_g: The molecular orbital coefficient matrix of the xth
             determinant.
-    :param mol: The pyscf molecule class, from which the nuclear coordinates
-            and atomic numbers are taken.
+    :param sao: Zeroth order AO overlap matrix.
     :param nelec: The number of electrons in the molecule, determines which
             orbitals are occupied and virtual.
     :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
             If :const:'False', :math:'\diamond = \hat{e}'.
-    :param p_tuple: Tuple of 2 elements, the first being the particular p in
-            sum over p, which is used to replace a particular row of the
-            MO overlap matrix with its derivative, as per terms B ad D of the
-            theory. The second element is an integer:
-                0 specifies the AO basis function in the bra of the AO overlap
-                matrix is differentiated.
-                1 specifies the AO basis function in the ket of the AO overlap
-                matrix is differentiated.
-            By default set to None, in which case the zeroth order MO overlap
-            matrix is used.
-    :param sao1: The overlap matrix in which either the AO basis function in
-            the bra or ket has been differentiated. By default set to None.
 
     :returns: list: Diagonal matrix of Löwdin overlaps, transformed MO
             coefficient for w determinant, transformed MO coefficient for x
             determinant.
     """
 
-    omega = np.identity(2)
-    sao0 = mol.intor("int1e_ovlp")
-    sao0 = np.kron(omega, sao0)
-
     if not complexsymmetric:
-        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao0,
-                                   x_g[:, 0:nelec]]) #Only occ orbitals
-    else:
-        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao0,
+        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao,
                                    x_g[:, 0:nelec]])
-
-    print("wxs before:\n", wxs)
-    if p_tuple is not None:
-        assert sao1 is not None
-        if not complexsymmetric:
-            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T.conj(), sao1,
-                                        x_g[:, 0:nelec]]) #Only occ orbitals
-        else:
-            wxs1 = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao1,
-                                        x_g[:, 0:nelec]])
+    else:
+        wxs = np.linalg.multi_dot([w_g[:, 0:nelec].T, sao,
+                                   x_g[:, 0:nelec]])
 
         p, braket = p_tuple
         if braket == 0: #Row replacement when bra differentiated
@@ -96,7 +68,6 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
         elif braket == 1: #Column replacement when ket differentiated
             wxs[:,p] = wxs1[:,p]
 
-    print("wxs after:\n", wxs)
     wxu,_,wxvh = np.linalg.svd(wxs)
     wxv = wxvh.T.conj()
     det_wxu = np.linalg.det(wxu)
@@ -124,33 +95,132 @@ def lowdin_pairing(w_g, x_g, mol, nelec, complexsymmetric: bool, p_tuple=None,
     #                                     x_g_t[:, 0:nelec]])
 
     if not complexsymmetric:
-        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao0,
+        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao,
                                         x_g_t[:, 0:nelec]])
     else:
-        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao0,
+        wxlambda = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao,
                                         x_g_t[:, 0:nelec]])
 
-    print("wxlambda0:\n", wxlambda)
-
-    if p_tuple is not None:
-        assert sao1 is not None
-        if not complexsymmetric:
-            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T.conj(), sao1,
-                                             x_g_t[:, 0:nelec]])
-        else:
-            wxlambda1 = np.linalg.multi_dot([w_g_t[:, 0:nelec].T, sao1,
-                                             x_g_t[:, 0:nelec]])
-
-        p, braket = p_tuple
-        if braket == 0: #Row replacement when bra differentiated
-            wxlambda[p,:] = wxlambda1[p,:]
-        elif braket == 1: #Column replacement when ket differentiated
-            wxlambda[:,p] = wxlambda1[:,p]
-
-    print("wxlambda:\n", wxlambda)
     assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
 
     return wxlambda, w_g_t, x_g_t
+
+
+def lowdin_pairing1_p(w_g, x_g, sao, nelec, complexsymmetric: bool, sao1,
+                      p_tuple):
+
+    r"""Performes Lowdin pairing for the case in which one of the determinants
+    has a spin orbital expressed in the perturbed AO basis. Further it
+    calculates the additional terms required for the evaluation of the one
+    and two electron contributions to the NOCI hamiltonian derivative for
+    terms B and D as per the theory.
+
+    .. math::
+
+            \mathbf{\prescript{wx}{}\Lambda}
+            = \mathbf{\prescript{wx}{}U}^{\dagger}\
+              \mathbf{\prescript{wx}{}S}\ \mathbf{\prescript{wx}{}V}
+
+    where
+
+    .. math::
+
+            \mathbf{\prescript{wx}{}S}
+            = \mathbf{\prescript{w}{}G}^{\dagger\diamond}\
+              \mathbf{S}_{\mathrm{AO}}\ \mathbf{\prescript{x}{}G}
+
+    The coefficient matrices are then transformed according to:
+
+    .. math::
+
+            \prescript{w}{}{\tilde{\mathbf{G}}}
+            = \prescript{w}{}{\mathbf{G}}
+            \prescript{wx}{}{\mathbf{U}}^{\diamond}
+
+    and
+
+    .. math::
+
+            \prescript{x}{}{\tilde{\mathbf{G}}}
+            = \prescript{x}{}{\mathbf{G}}
+            \prescript{wx}{}{\mathbf{V}}
+
+    :param w_g: The molecular orbital coefficient matrix of the wth
+            determinant.
+    :param x_g: The molecular orbital coefficient matrix of the xth
+            determinant.
+    :param sao: Zeroth order AO overlap matrix.
+    :param nelec: The number of electrons in the molecule, determines which
+            orbitals are occupied and virtual.
+    :param complexsymmetric: If :const:'True', :math:'/diamond = /star'.
+            If :const:'False', :math:'\diamond = \hat{e}'.
+    :param sao1: First order AO overlap matrix in which either the AO basis
+            function in the bra or ket has been perturbed.
+    :param p_tuple: Tuple of first element p and second element:
+            0: Determinant w is perturbed
+            1: Determinant x is perturbed
+
+    :returns: list: Diagonal matrix of Löwdin overlaps, transformed MO
+            coefficient for w determinant, transformed MO coefficient for x
+            determinant, MO coefficient matrix constructed from the matrix
+            product between the pth column of the coeffient matrix of the
+            perturbed determinant, and the pth row of the U or V matrix.
+    """
+
+    p, braket = p_tuple
+    if braket == 0:
+        if not complexsymmetric:
+            w_g_s = np.dot(sao.conj().T, w_g[:, 0:nelec])
+            w_g_s[:, p:p+1] = np.dot(sao1.conj().T, w_g[:, p:p+1])
+        else:
+            w_g_s = np.dot(sao.T, w_g[:, 0:nelec])
+            w_g_s[:, p:p+1] = np.dot(sao1.T, w_g[:, p:p+1])
+        x_g_s = x_g[:, 0:nelec]
+    else:
+        w_g_s = w_g[:, 0:nelec]
+        x_g_s = np.dot(sao, x_g[:, 0:nelec])
+        x_g_s[:, p:p+1] = np.dot(sao1, x_g[:, p:p+1])
+
+    if not complexsymmetric:
+        wxs = np.dot(w_g_s.T.conj(), x_g_s)
+    else:
+        wxs = np.dot(w_g_s.T, x_g_s)
+
+    wxu,_,wxvh = np.linalg.svd(wxs)
+    wxv = wxvh.T.conj()
+    det_wxu = np.linalg.det(wxu)
+    det_wxv = np.linalg.det(wxv)
+    wxu[:, 0] *= det_wxu.conj() #Removes phase induced by unitary transform
+    wxv[:, 0] *= det_wxv.conj()
+
+    assert np.allclose(np.dot(wxu.T.conj(), wxu), np.identity(nelec),
+                       rtol = 1.e-5, atol = 1.e-8) #Check Unitary
+    assert np.allclose(np.dot(wxv.T.conj(), wxv), np.identity(nelec),
+                       rtol = 1.e-5, atol = 1.e-8)
+
+    if not complexsymmetric:
+        w_g_s_t = np.dot(w_g_s, wxu)
+        w_g_t = np.dot(w_g[:, 0:nelec], wxu)
+    else:
+        w_g_s_t = np.dot(w_g_s, wxu.conj())
+        w_g_t = np.dot(w_g[:, 0:nelec], wxu.conj())
+
+    x_g_s_t = np.dot(x_g_s, wxv)
+    x_g_t = np.dot(x_g[:, 0:nelec], wxv)
+
+    if not complexsymmetric:
+        wxlambda = np.linalg.multi_dot([w_g_s_t.T.conj(), x_g_s_t])
+    else:
+        wxlambda = np.linalg.multi_dot([w_g_s_t.T, x_g_s_t])
+
+    assert np.amax(np.abs(wxlambda - np.diag(np.diag(wxlambda)))) <= 1e-10
+
+    if braket == 0:
+        g_t_p = np.dot(w_g[:, p:p+1], wxu[p:p+1, :])
+    else:
+        g_t_p = np.dot(x_g[:, p:p+1], wxv[p:p+1, :])
+
+    return wxlambda, w_g_t, x_g_t, g_t_p
 
 
 def lowdin_prod(wxlambda, rmind):

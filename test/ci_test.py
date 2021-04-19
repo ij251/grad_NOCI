@@ -35,7 +35,7 @@ g0uhfalpha0 = np.array([[0.52754646684681505420, -1.56782302496071901388],
 
 g0uhfbeta0 = np.array([[-1.56782302496071901388, 0.52754646684681505420],
                         [1.56782302496071901388, 0.52754646684681505420]])
-g0ghf2 = uhf_to_ghf(g0uhfalpha0, g0uhfbeta0, 1, 1) 
+g0ghf2 = uhf_to_ghf(g0uhfalpha0, g0uhfbeta0, 1, 1)
 
 # sigma u^2
 # g0rhf2 = np.array([[-1.56782302496071901388, 0.52754646684681505420],
@@ -47,10 +47,11 @@ a_g2u2 = [0.9971103, -0.0759676]
 a_g2ug = [1, 0] #???
 
 g0_list = [g0ghf1, g0ghf2]
+# g0_list = [g0ghf2]
 g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)
 
-# e1 = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)
-# print("e1:\n", e1)
+e1 = get_e1_noci(a_g2ug, mol, atom, coord, g0_list, nelec, False)
+print("e1_noci:\n", e1)
 
 
 
@@ -62,5 +63,5 @@ print("0_g1 sigma g 2 (differentiated):\n", g1_list[0])
 # print("1_g0 sigma g sigma u:\n", g0ghf2)
 s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
 print("s1mat:\n", s1mat)
-# h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
-# print("h1mat:\n", h1mat)
+h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)
+print("h1mat:\n", h1mat)

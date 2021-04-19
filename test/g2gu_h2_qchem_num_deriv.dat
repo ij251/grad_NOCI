@@ -21,7 +21,7 @@ overlap matrix derivative
 [0,0]
 [0,0]
 
-hamiltonian matrix derivative
+hamiltonian matrix numerical derivative
 
 [-0.35628, 0.00000]
 [0.00000 , -1.32565]
@@ -31,8 +31,8 @@ one electron contribution
 [0.73028, 0.0000]
 [0.00000, -0.238] 
 
-two electron contribution
+two electron numerical derivative contribution
 
-[0.09646, 0.000000]
+[-0.09646, 0.000000]
 [0.00000, -0.09781]
 

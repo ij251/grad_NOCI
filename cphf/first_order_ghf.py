@@ -2,7 +2,7 @@ from pyscf import gto, scf, grad
 import time
 import numpy as np
 import scipy
-from zeroth_order_ghf import rhf_to_ghf, get_p0, get_hcore0, get_pi0, get_f0,\
+from .zeroth_order_ghf import rhf_to_ghf, get_p0, get_hcore0, get_pi0, get_f0,\
 get_e0_nuc, get_e0_elec
 
 def get_s1(mol, atom, coord):

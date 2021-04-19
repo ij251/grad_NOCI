@@ -1,12 +1,14 @@
 import numpy as np
 from pyscf import gto, scf, grad
-from zeroth_order_ghf import *
+from cphf.zeroth_order_ghf import *
 
 
 'h3 uhf noci states'
 
-g0alpha0 = np.loadtxt("h3states/state0_a")
-g0beta0 = np.loadtxt("h3states/state0_b")
+# Geometry g0
+
+g0alpha0 = np.loadtxt("h3states/g0/state0_a")
+g0beta0 = np.loadtxt("h3states/g0/state0_b")
 # g0alpha0 = np.array([[0.431728, -0.325562, 1.628633],
 #                      [0.315151, 1.068455, -0.186595],
 #                      [0.430280, -0.481068, -1.525352]])
@@ -16,8 +18,8 @@ g0beta0 = np.loadtxt("h3states/state0_b")
 #                     [0.473328, -0.471677, -1.515503]])
 
 
-g0alpha1 = np.loadtxt("h3states/state1_a")
-g0beta1 = np.loadtxt("h3states/state1_b")
+g0alpha1 = np.loadtxt("h3states/g0/state1_a")
+g0beta1 = np.loadtxt("h3states/g0/state1_b")
 # g0alpha1 = np.array([[-0.413134, 1.627175, 0.355595],
 #                      [0.993907, -0.175383, 0.507073],
 #                      [-0.538985, -1.528109, 0.342997]])
@@ -27,8 +29,8 @@ g0beta1 = np.loadtxt("h3states/state1_b")
 #                     [-1.526603, 0.357070, -0.534090]])
 
 
-g0alpha2 = np.loadtxt("h3states/state2_a")
-g0beta2 = np.loadtxt("h3states/state2_b")
+g0alpha2 = np.loadtxt("h3states/g0/state2_a")
+g0beta2 = np.loadtxt("h3states/g0/state2_b")
 
 # g0alpha2 = np.array([[0.512116, 1.626205, -0.194988],
 #                      [0.172477, -0.240733, 1.089970],
@@ -38,8 +40,8 @@ g0beta2 = np.loadtxt("h3states/state2_b")
 #                     [0.606218, 0.935777, -0.180431],
 #                     [0.285625, -0.579312, -1.525150]])
 
-g0alpha3 = np.loadtxt("h3states/state3_a")
-g0beta3 = np.loadtxt("h3states/state3_b")
+g0alpha3 = np.loadtxt("h3states/g0/state3_a")
+g0beta3 = np.loadtxt("h3states/g0/state3_b")
 
 # g0alpha3 = np.array([[0.525621, 0.022494, 1.633415],
 #                      [0.019427, 1.077924, -0.366805],
@@ -48,6 +50,25 @@ g0beta3 = np.loadtxt("h3states/state3_b")
 # g0beta3 = np.array([[-0.133624, 0.493226, 1.638200],
 #                     [1.092289, 0.119214, -0.261584],
 #                     [-0.499144, 0.498961, -1.498486]])
+
+
+#geometry g1
+
+g0alpha0_g1 = np.loadtxt("h3states/g1/state0_a")
+g0beta0_g1 = np.loadtxt("h3states/g1/state0_b")
+
+g0alpha1_g1 = np.loadtxt("h3states/g1/state1_a")
+g0beta1_g1 = np.loadtxt("h3states/g1/state1_b")
+
+"linear geometry"
+
+
+g0alpha0_lin = np.loadtxt("h3states/linear/state0_a")
+g0beta0_lin = np.loadtxt("h3states/linear/state0_b")
+
+g0alpha1_lin = np.loadtxt("h3states/linear/state1_a")
+g0beta1_lin = np.loadtxt("h3states/linear/state1_b")
+
 
 
 ''' First index is the state number, second is the order'''
@@ -95,3 +116,46 @@ class h3_states2:
     g10 = uhf_to_ghf(g0alpha1, g0beta1, nalpha, nbeta) #energy = 0.9899506826
     # g00[:,[2,1]]=g00[:,[1,2]]
     # g10[:,[2,1]]=g10[:,[1,2]]
+
+
+#H3 states at a perturbed geometry for testing
+class h3_states2_g1:
+    mol = gto.M(
+            atom = (
+                f"H 0 0 0;"
+                f"H 0 0 2.0000001;"
+                f"H 0 1 0;"
+            ),
+            basis = 'sto-3g',
+            unit = 'Bohr',
+            charge = 0,
+            spin = 1)
+    nelec = 3
+    nalpha = 2
+    nbeta = 1
+    atom = 1
+    coord = 2
+    a = [0.9985121, 0.0545969]
+    g00 = uhf_to_ghf(g0alpha0_g1, g0beta0_g1, nalpha, nbeta)
+    g10 = uhf_to_ghf(g0alpha1_g1, g0beta1_g1, nalpha, nbeta)
+
+
+class h3_states2_linear:
+    mol = gto.M(
+            atom = (
+                f"H 0 0 -1;"
+                f"H 0 0 0;"
+                f"H 0 0 1;"
+            ),
+            basis = 'sto-3g',
+            unit = 'Bohr',
+            charge = 0,
+            spin = 1)
+    nelec = 3
+    nalpha = 2
+    nbeta = 1
+    atom = 1
+    coord = 0
+    a = [1, 0]
+    g00 = uhf_to_ghf(g0alpha0_lin, g0beta0_lin, nalpha, nbeta)
+    g10 = uhf_to_ghf(g0alpha1_lin, g0beta1_lin, nalpha, nbeta)
