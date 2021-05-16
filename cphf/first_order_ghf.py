@@ -603,6 +603,24 @@ def get_e1_elec(mol, g1, atom, coord, complexsymmetric: bool, nelec,
     return e1_elec
 
 
+def get_e1_scf(mol, atom, coord, nelec, complexsymmetric, g0_ghf=None):
+
+    if g0_ghf is None:
+
+        g1 = g1_iteration(complexsymmetric, mol, atom, coord, nelec)
+        e1_elec = get_e1_elec(mol, g1, atom, coord, complexsymmetric, nelec)
+
+    else:
+
+        g1 = g1_iteration(complexsymmetric, mol, atom, coord, nelec, g0_ghf)
+        e1_elec = get_e1_elec(mol, g1, atom, coord, complexsymmetric, nelec,
+                              g0_ghf)
+
+    e1_nuc = get_e1_nuc(mol, atom, coord)
+
+    return e1_elec + e1_nuc
+
+
 def write_e1_mat(mol, nelec, complexsymmetric, g0_ghf = None):
 
     r"""Writes matrix of ghf energy derivatives for each atom and coordinate.

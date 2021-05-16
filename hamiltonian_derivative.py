@@ -913,6 +913,7 @@ def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,
 
     :returns: Matrix of hamiltonian element derivatives.
     """
+
     nnoci = len(g0_list)
     h1mat = np.zeros((nnoci,nnoci))
 
