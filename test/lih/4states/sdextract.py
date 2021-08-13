@@ -64,5 +64,5 @@ def get_coords(sd_file):
 
 get_noci_coefficients("noci.sd")
 get_mo_coefficients("noci.sd")
-get_noci_energies("noci.sd")
+# get_noci_energies("noci.sd")
 get_coords("noci.sd")

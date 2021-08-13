@@ -1,0 +1,415 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+a	past_method/overlap_derivative_test.py	/^a = h3.a$/;"	v
+a	test/e1_noci_test.py	/^a = h3.a$/;"	v
+a	test/h3states/h3_states.py	/^    a = [0.9985121, 0.0545969]$/;"	v	class:h3_states2
+a	test/h3states/h3_states.py	/^    a = [0.9985121, 0.0545969]$/;"	v	class:h3_states2_g1
+a	test/h3states/h3_states.py	/^    a = [0.9989168, 0.0545437, 0.0109276, 0.0025334]$/;"	v	class:h3_states4
+a	test/h3states/h3_states.py	/^    a = [1, 0]$/;"	v	class:h3_states2_linear
+a	test/linear_h3.py	/^a = h3.a$/;"	v
+a	test/overlap_derivative_test.py	/^a = h3.a$/;"	v
+a	test/uhf_g1_test.py	/^a = h3.a$/;"	v
+a	test/zeroth_order_test.py	/^a = h3.a$/;"	v
+a_g2u2	test/ci_test.py	/^a_g2u2 = [0.9971103, -0.0759676]$/;"	v
+a_g2ug	test/ci_test.py	/^a_g2ug = [1, 0] #???$/;"	v
+atom	cphf/run_calc_rhf.py	/^        atom = ($/;"	v
+atom	cphf/run_calc_rhf.py	/^atom = 1$/;"	v
+atom	cphf/run_calc_uhf.py	/^        atom = ($/;"	v
+atom	cphf/run_calc_uhf.py	/^atom = 1$/;"	v
+atom	cphf/troubleshooting/pyscf_differences.py	/^        atom = ($/;"	v
+atom	cphf/troubleshooting/without_p1.py	/^        atom = ($/;"	v
+atom	cphf/troubleshooting/without_p1.py	/^atom = 1$/;"	v
+atom	past_method/overlap_derivative_test.py	/^atom = h3.atom$/;"	v
+atom	test/ci_test.py	/^        atom = ($/;"	v
+atom	test/ci_test.py	/^atom = 1$/;"	v
+atom	test/e1_noci_test.py	/^atom = h3.atom$/;"	v
+atom	test/h3states/h3_states.py	/^            atom = ($/;"	v	class:h3_states2
+atom	test/h3states/h3_states.py	/^            atom = ($/;"	v	class:h3_states2_g1
+atom	test/h3states/h3_states.py	/^            atom = ($/;"	v	class:h3_states2_linear
+atom	test/h3states/h3_states.py	/^            atom = ($/;"	v	class:h3_states4
+atom	test/h3states/h3_states.py	/^    atom = 1$/;"	v	class:h3_states2
+atom	test/h3states/h3_states.py	/^    atom = 1$/;"	v	class:h3_states2_g1
+atom	test/h3states/h3_states.py	/^    atom = 1$/;"	v	class:h3_states2_linear
+atom	test/h3states/h3_states.py	/^    atom = 1$/;"	v	class:h3_states4
+atom	test/lih/631gstar/test_basis.py	/^        atom = ($/;"	v
+atom	test/lih/631gstar/test_basis.py	/^atom = 1$/;"	v
+atom	test/linear_h3.py	/^atom = h3.atom$/;"	v
+atom	test/overlap_derivative_test.py	/^atom = h3.atom$/;"	v
+atom	test/uhf_g1_test.py	/^atom = h3.atom$/;"	v
+atom	test/zeroth_order_test.py	/^atom = h3.atom$/;"	v
+basis	cphf/run_calc_rhf.py	/^        basis = 'sto-3g',$/;"	v
+basis	cphf/run_calc_uhf.py	/^        basis = 'sto-3g',$/;"	v
+basis	cphf/troubleshooting/pyscf_differences.py	/^        basis = '6-31g',$/;"	v
+basis	cphf/troubleshooting/pyscf_differences.py	/^        basis = 'sto-3g',$/;"	v
+basis	cphf/troubleshooting/without_p1.py	/^        basis = '6-31g',$/;"	v
+basis	test/ci_test.py	/^        basis = 'sto-3g',$/;"	v
+basis	test/h3states/h3_states.py	/^            basis = 'sto-3g',$/;"	v	class:h3_states2
+basis	test/h3states/h3_states.py	/^            basis = 'sto-3g',$/;"	v	class:h3_states2_g1
+basis	test/h3states/h3_states.py	/^            basis = 'sto-3g',$/;"	v	class:h3_states2_linear
+basis	test/h3states/h3_states.py	/^            basis = 'sto-3g',$/;"	v	class:h3_states4
+basis	test/lih/631gstar/test_basis.py	/^        basis = '6-31g*',$/;"	v
+cartlables	test/lih/631gstar/test_basis.py	/^cartlables= mol.cart_labels()$/;"	v
+charge	cphf/run_calc_rhf.py	/^        charge = 0,$/;"	v
+charge	cphf/run_calc_uhf.py	/^        charge = 0,$/;"	v
+charge	cphf/troubleshooting/pyscf_differences.py	/^        charge = 0,$/;"	v
+charge	cphf/troubleshooting/pyscf_differences.py	/^        charge = 1,$/;"	v
+charge	cphf/troubleshooting/without_p1.py	/^        charge = 0,$/;"	v
+charge	test/ci_test.py	/^        charge = 0,$/;"	v
+charge	test/h3states/h3_states.py	/^            charge = 0,$/;"	v	class:h3_states2
+charge	test/h3states/h3_states.py	/^            charge = 0,$/;"	v	class:h3_states2_g1
+charge	test/h3states/h3_states.py	/^            charge = 0,$/;"	v	class:h3_states2_linear
+charge	test/h3states/h3_states.py	/^            charge = 0,$/;"	v	class:h3_states4
+charge	test/lih/631gstar/test_basis.py	/^        charge = 0,$/;"	v
+compare_pyscf	cphf/troubleshooting/pyscf_differences.py	/^def compare_pyscf(mol_a, mol_b, nelec, atom, coord):$/;"	f
+compare_pyscf_energy	cphf/troubleshooting/pyscf_differences.py	/^def compare_pyscf_energy(mol_a, mol_b):$/;"	f
+coord	cphf/run_calc_rhf.py	/^coord = 2$/;"	v
+coord	cphf/run_calc_uhf.py	/^coord = 2$/;"	v
+coord	cphf/troubleshooting/without_p1.py	/^coord = 2$/;"	v
+coord	past_method/overlap_derivative_test.py	/^coord = h3.coord$/;"	v
+coord	test/ci_test.py	/^coord = 2$/;"	v
+coord	test/e1_noci_test.py	/^coord = h3.coord$/;"	v
+coord	test/h3states/h3_states.py	/^    coord = 0$/;"	v	class:h3_states2_linear
+coord	test/h3states/h3_states.py	/^    coord = 2$/;"	v	class:h3_states2
+coord	test/h3states/h3_states.py	/^    coord = 2$/;"	v	class:h3_states2_g1
+coord	test/h3states/h3_states.py	/^    coord = 2$/;"	v	class:h3_states4
+coord	test/lih/631gstar/test_basis.py	/^coord = 2$/;"	v
+coord	test/linear_h3.py	/^coord = h3.coord$/;"	v
+coord	test/overlap_derivative_test.py	/^coord = h3.coord$/;"	v
+coord	test/uhf_g1_test.py	/^coord = h3.coord$/;"	v
+coord	test/zeroth_order_test.py	/^coord = h3.coord$/;"	v
+e0	test/zeroth_order_test.py	/^e0 = get_e0_noci(a, mol, g0_list, nelec, False)$/;"	v
+e1	cphf/troubleshooting/without_p1.py	/^e1 = get_e1_without_p1(g0, mol, atom, coord, nelec)$/;"	v
+e1	test/ci_test.py	/^e1 = get_e1_noci(a_g2ug, mol, atom, coord, g0_list, nelec, False)$/;"	v
+e1_noci	test/e1_noci_test.py	/^e1_noci = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)$/;"	v
+e1_noci	test/linear_h3.py	/^e1_noci = get_e1_noci(a, mol, atom, coord, g0_list, nelec, False)$/;"	v
+g	cphf/run_calc_rhf.py	/^g = grad.rhf.Gradients(m)$/;"	v
+g	cphf/run_calc_uhf.py	/^g = grad.uhf.Gradients(m)$/;"	v
+g0	cphf/troubleshooting/without_p1.py	/^g0 = m.mo_coeff$/;"	v
+g0	test/lih/631gstar/test_basis.py	/^g0 = m.mo_coeff$/;"	v
+g00	past_method/overlap_derivative_test.py	/^g00 = h3.g00$/;"	v
+g00	test/e1_noci_test.py	/^g00 = h3.g00$/;"	v
+g00	test/h3states/h3_states.py	/^    g00 = uhf_to_ghf(g0alpha0, g0beta0, nalpha, nbeta) #energy = -1.4222053120$/;"	v	class:h3_states2
+g00	test/h3states/h3_states.py	/^    g00 = uhf_to_ghf(g0alpha0, g0beta0, nalpha, nbeta) #energy = -1.4222053120$/;"	v	class:h3_states4
+g00	test/h3states/h3_states.py	/^    g00 = uhf_to_ghf(g0alpha0_g1, g0beta0_g1, nalpha, nbeta)$/;"	v	class:h3_states2_g1
+g00	test/h3states/h3_states.py	/^    g00 = uhf_to_ghf(g0alpha0_lin, g0beta0_lin, nalpha, nbeta)$/;"	v	class:h3_states2_linear
+g00	test/linear_h3.py	/^g00 = h3.g00$/;"	v
+g00	test/overlap_derivative_test.py	/^g00 = h3.g00$/;"	v
+g00	test/uhf_g1_test.py	/^g00 = h3.g00$/;"	v
+g00	test/zeroth_order_test.py	/^g00 = h3.g00$/;"	v
+g0_list	past_method/overlap_derivative_test.py	/^g0_list = [g00, g10]$/;"	v
+g0_list	test/ci_test.py	/^g0_list = [g0ghf1, g0ghf2]$/;"	v
+g0_list	test/e1_noci_test.py	/^g0_list = [g00, g10]$/;"	v
+g0_list	test/linear_h3.py	/^g0_list = [g00, g10]$/;"	v
+g0_list	test/overlap_derivative_test.py	/^g0_list = [g00, g10]$/;"	v
+g0_list	test/uhf_g1_test.py	/^g0_list = [g00, g10, g20, g30]$/;"	v
+g0_list	test/zeroth_order_test.py	/^g0_list = [g00, g10]$/;"	v
+g0alpha0	cphf/run_calc_uhf.py	/^g0alpha0 = np.array([[0.431728, -0.325562, 1.628633],$/;"	v
+g0alpha0	test/h3states/h3_states.py	/^g0alpha0 = np.loadtxt("h3states\/g0\/state0_a")$/;"	v
+g0alpha0_g1	test/h3states/h3_states.py	/^g0alpha0_g1 = np.loadtxt("h3states\/g1\/state0_a")$/;"	v
+g0alpha0_lin	test/h3states/h3_states.py	/^g0alpha0_lin = np.loadtxt("h3states\/linear\/state0_a")$/;"	v
+g0alpha1	test/h3states/h3_states.py	/^g0alpha1 = np.loadtxt("h3states\/g0\/state1_a")$/;"	v
+g0alpha1_g1	test/h3states/h3_states.py	/^g0alpha1_g1 = np.loadtxt("h3states\/g1\/state1_a")$/;"	v
+g0alpha1_lin	test/h3states/h3_states.py	/^g0alpha1_lin = np.loadtxt("h3states\/linear\/state1_a")$/;"	v
+g0alpha2	test/h3states/h3_states.py	/^g0alpha2 = np.loadtxt("h3states\/g0\/state2_a")$/;"	v
+g0alpha3	test/h3states/h3_states.py	/^g0alpha3 = np.loadtxt("h3states\/g0\/state3_a")$/;"	v
+g0beta0	cphf/run_calc_uhf.py	/^g0beta0 = np.array([[0.529658, -0.149873, 1.625370],$/;"	v
+g0beta0	test/h3states/h3_states.py	/^g0beta0 = np.loadtxt("h3states\/g0\/state0_b")$/;"	v
+g0beta0_g1	test/h3states/h3_states.py	/^g0beta0_g1 = np.loadtxt("h3states\/g1\/state0_b")$/;"	v
+g0beta0_lin	test/h3states/h3_states.py	/^g0beta0_lin = np.loadtxt("h3states\/linear\/state0_b")$/;"	v
+g0beta1	test/h3states/h3_states.py	/^g0beta1 = np.loadtxt("h3states\/g0\/state1_b")$/;"	v
+g0beta1_g1	test/h3states/h3_states.py	/^g0beta1_g1 = np.loadtxt("h3states\/g1\/state1_b")$/;"	v
+g0beta1_lin	test/h3states/h3_states.py	/^g0beta1_lin = np.loadtxt("h3states\/linear\/state1_b")$/;"	v
+g0beta2	test/h3states/h3_states.py	/^g0beta2 = np.loadtxt("h3states\/g0\/state2_b")$/;"	v
+g0beta3	test/h3states/h3_states.py	/^g0beta3 = np.loadtxt("h3states\/g0\/state3_b")$/;"	v
+g0ghf0	cphf/run_calc_uhf.py	/^g0ghf0 = uhf_to_ghf(g0alpha0, g0beta0, nalpha, nbeta) #energy = -1.4222053120$/;"	v
+g0ghf1	test/ci_test.py	/^g0ghf1 = rhf_to_ghf(g0rhf1, nelec)$/;"	v
+g0ghf2	test/ci_test.py	/^g0ghf2 = uhf_to_ghf(g0uhfalpha0, g0uhfbeta0, 1, 1)$/;"	v
+g0rhf1	test/ci_test.py	/^g0rhf1 = np.array([[0.52754646684681505420, -1.56782302496071901388],$/;"	v
+g0uhfalpha0	test/ci_test.py	/^g0uhfalpha0 = np.array([[0.52754646684681505420, -1.56782302496071901388],$/;"	v
+g0uhfbeta0	test/ci_test.py	/^g0uhfbeta0 = np.array([[-1.56782302496071901388, 0.52754646684681505420],$/;"	v
+g1	cphf/run_calc_rhf.py	/^g1 = g1_iteration(False, mol, atom, coord, nelec)$/;"	v
+g10	past_method/overlap_derivative_test.py	/^g10 = h3.g10$/;"	v
+g10	test/e1_noci_test.py	/^g10 = h3.g10$/;"	v
+g10	test/h3states/h3_states.py	/^    g10 = uhf_to_ghf(g0alpha1, g0beta1, nalpha, nbeta) #energy = 0.9899506826$/;"	v	class:h3_states2
+g10	test/h3states/h3_states.py	/^    g10 = uhf_to_ghf(g0alpha1, g0beta1, nalpha, nbeta) #energy = 0.9899506826$/;"	v	class:h3_states4
+g10	test/h3states/h3_states.py	/^    g10 = uhf_to_ghf(g0alpha1_g1, g0beta1_g1, nalpha, nbeta)$/;"	v	class:h3_states2_g1
+g10	test/h3states/h3_states.py	/^    g10 = uhf_to_ghf(g0alpha1_lin, g0beta1_lin, nalpha, nbeta)$/;"	v	class:h3_states2_linear
+g10	test/linear_h3.py	/^g10 = h3.g10$/;"	v
+g10	test/overlap_derivative_test.py	/^g10 = h3.g10$/;"	v
+g10	test/uhf_g1_test.py	/^g10 = h3.g10$/;"	v
+g10	test/zeroth_order_test.py	/^g10 = h3.g10$/;"	v
+g1_iteration	cphf/first_order_ghf.py	/^def g1_iteration(complexsymmetric: bool, mol, atom, coord, nelec,$/;"	f
+g1_iteration	cphf/troubleshooting/spatial_CPHF_functions.py	/^def g1_iteration(complexsymmetric: bool, mol, g0, x, atom, coord, nelec,$/;"	f
+g1_list	past_method/overlap_derivative_test.py	/^g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)$/;"	v
+g1_list	test/ci_test.py	/^g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)$/;"	v
+g1_list	test/e1_noci_test.py	/^g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)$/;"	v
+g1_list	test/linear_h3.py	/^g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)$/;"	v
+g1_list	test/overlap_derivative_test.py	/^g1_list = get_g1_list(mol, atom, coord, g0_list, nelec, False)$/;"	v
+g20	test/h3states/h3_states.py	/^    g20 = uhf_to_ghf(g0alpha2, g0beta2, nalpha, nbeta) #energy = -0.6995970325$/;"	v	class:h3_states4
+g20	test/uhf_g1_test.py	/^g20 = h3.g20$/;"	v
+g30	test/h3states/h3_states.py	/^    g30 = uhf_to_ghf(g0alpha3, g0beta3, nalpha, nbeta) #energy = -0.6985647926$/;"	v	class:h3_states4
+g30	test/uhf_g1_test.py	/^g30 = h3.g30$/;"	v
+g31	test/uhf_g1_test.py	/^g31 = g1_iteration(False, mol, atom, coord, nelec, g30)$/;"	v
+get_analytic_derivatives_h2	test/h2/sto-3g/g2gu/get_derivatives.py	/^def get_analytic_derivatives_h2(g_num, states_num, atoms, nelec, nalpha, nbeta,$/;"	f
+get_analytic_derivatives_h2	test/h2/sto-3g/get_derivatives.py	/^def get_analytic_derivatives_h2(g_num, states_num, atoms, nelec, nalpha, nbeta,$/;"	f
+get_analytic_derivatives_lih	test/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/h3/180/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/h3/90/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/lih/4states/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/lih/631gstar/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/lih/sto3g/4states/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_analytic_derivatives_lih	test/lih/sto3g/get_derivatives.py	/^def get_analytic_derivatives_lih(g_num, states_num, complexsymmetric):$/;"	f
+get_coords	test/h2/sto-3g/g2gu/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/h2/sto-3g/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/h3/180/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/h3/90/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/lih/4states/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/lih/631gstar/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/lih/sto3g/4states/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/lih/sto3g/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_coords	test/sdextract.py	/^def get_coords(sd_file):$/;"	f
+get_e0_elec	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_e0_elec(mol, g0):$/;"	f
+get_e0_elec	cphf/zeroth_order_ghf.py	/^def get_e0_elec(mol, g0, complexsymmetric, nelec):$/;"	f
+get_e0_noci	energy_derivative.py	/^def get_e0_noci(a, mol, g0_list, nelec, complexsymmetric):$/;"	f
+get_e0_noci	past_method/energy_derivative.py	/^def get_e0_noci(a, mol, g0_list, nelec, complexsymmetric):$/;"	f
+get_e0_nuc	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_e0_nuc(mol):$/;"	f
+get_e0_nuc	cphf/zeroth_order_ghf.py	/^def get_e0_nuc(mol):$/;"	f
+get_e1_elec	cphf/first_order_ghf.py	/^def get_e1_elec(mol, g1, atom, coord, complexsymmetric: bool, nelec,$/;"	f
+get_e1_elec	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_e1_elec(mol, g0, g1, atom, coord, complexsymmetric: bool, nelec):$/;"	f
+get_e1_noci	energy_derivative.py	/^def get_e1_noci(a, mol, atom, coord, g0_list, nelec, complexsymmetric):$/;"	f
+get_e1_noci	past_method/energy_derivative.py	/^def get_e1_noci(a, mol, atom, coord, g0_list, nelec, complexsymmetric):$/;"	f
+get_e1_nuc	cphf/first_order_ghf.py	/^def get_e1_nuc(mol, atom, coord):$/;"	f
+get_e1_nuc	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_e1_nuc(mol, atom, coord):$/;"	f
+get_e1_scf	cphf/first_order_ghf.py	/^def get_e1_scf(mol, atom, coord, nelec, complexsymmetric, g0_ghf=None):$/;"	f
+get_e1_without_p1	cphf/troubleshooting/without_p1.py	/^def get_e1_without_p1(g0, mol, atom, coord, nelec):$/;"	f
+get_f0	cphf/zeroth_order_ghf.py	/^def get_f0(hcore0, pi0, p0):$/;"	f
+get_f0_spatial	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_f0_spatial(hcore0, pi0, p0):$/;"	f
+get_f1	cphf/first_order_ghf.py	/^def get_f1(pi0, p0, hcore1, pi1, p1):$/;"	f
+get_f1	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_f1(pi0, p0, hcore1, pi1, p1):$/;"	f
+get_g1_list	overlap_derivative.py	/^def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_g1_list	past_method/non_ortho.py	/^def get_g1_list(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_g1_x	cphf/first_order_ghf.py	/^def get_g1_x(f1_x, s1_x, eta0, nelec):$/;"	f
+get_g1_x	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_g1_x(f1_x, s1_x, eta0, nelec):$/;"	f
+get_h0mat	hamiltonian_derivative.py	/^def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_h0mat	past_method/hamiltonian_derivative.py	/^def get_h0mat(mol, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_h1mat	hamiltonian_derivative.py	/^def get_h1mat(mol, atom, coord, g0_list, g1_list, nelec,$/;"	f
+get_h1mat	past_method/hamiltonian_derivative.py	/^def get_h1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_hcore0	cphf/zeroth_order_ghf.py	/^def get_hcore0(mol):$/;"	f
+get_hcore0_spatial	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_hcore0_spatial(mol):$/;"	f
+get_hcore1	cphf/first_order_ghf.py	/^def get_hcore1(mol, atom, coord):$/;"	f
+get_hcore1	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_hcore1(mol, atom, coord):$/;"	f
+get_hcore1_op	hamiltonian_derivative.py	/^def get_hcore1_op(mol, atom, coord):$/;"	f
+get_hcore1_partial	hamiltonian_derivative.py	/^def get_hcore1_partial(mol, atom, coord):$/;"	f
+get_j0	cphf/zeroth_order_ghf.py	/^def get_j0(mol):$/;"	f
+get_j1	cphf/first_order_ghf.py	/^def get_j1(mol, atom, coord):$/;"	f
+get_mo_coefficients	test/h2/sto-3g/g2gu/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/h2/sto-3g/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/h3/180/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/h3/90/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/lih/4states/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/lih/631gstar/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/lih/sto3g/4states/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/lih/sto3g/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_mo_coefficients	test/sdextract.py	/^def get_mo_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/h2/sto-3g/g2gu/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/h2/sto-3g/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/h3/180/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/h3/90/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/lih/4states/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/lih/631gstar/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/lih/sto3g/4states/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/lih/sto3g/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_coefficients	test/sdextract.py	/^def get_noci_coefficients(sd_file):$/;"	f
+get_noci_energies	test/h2/sto-3g/g2gu/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/h2/sto-3g/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/h3/180/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/h3/90/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/lih/4states/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/lih/631gstar/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/lih/sto3g/4states/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/lih/sto3g/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energies	test/sdextract.py	/^def get_noci_energies(sd_file):$/;"	f
+get_noci_energy_h2	test/h2/sto-3g/g2gu/get_derivatives.py	/^def get_noci_energy_h2(g_num):$/;"	f
+get_noci_energy_h2	test/h2/sto-3g/get_derivatives.py	/^def get_noci_energy_h2(g_num):$/;"	f
+get_nucwx0	hamiltonian_derivative.py	/^def get_nucwx0(mol, wxlambda0, complexsymmetric: bool):$/;"	f
+get_nucwx0	past_method/hamiltonian_derivative.py	/^def get_nucwx0(mol, wxlambda0, complexsymmetric: bool):$/;"	f
+get_nucwx1	hamiltonian_derivative.py	/^def get_nucwx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,$/;"	f
+get_nucwx1	past_method/hamiltonian_derivative.py	/^def get_nucwx1(mol, atom, coord, wxlambda0, wxlambda1, nelec,$/;"	f
+get_numerical_derivatives_h2	test/h2/sto-3g/g2gu/get_derivatives.py	/^def get_numerical_derivatives_h2(g_num, states_num):$/;"	f
+get_numerical_derivatives_h2	test/h2/sto-3g/get_derivatives.py	/^def get_numerical_derivatives_h2(g_num, states_num):$/;"	f
+get_numerical_derivatives_lih	test/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num, states_num):$/;"	f
+get_numerical_derivatives_lih	test/h3/180/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num):$/;"	f
+get_numerical_derivatives_lih	test/h3/90/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num):$/;"	f
+get_numerical_derivatives_lih	test/lih/4states/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num):$/;"	f
+get_numerical_derivatives_lih	test/lih/631gstar/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num, states_num):$/;"	f
+get_numerical_derivatives_lih	test/lih/sto3g/4states/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num, states_num):$/;"	f
+get_numerical_derivatives_lih	test/lih/sto3g/get_derivatives.py	/^def get_numerical_derivatives_lih(g_num, states_num):$/;"	f
+get_onewx0	hamiltonian_derivative.py	/^def get_onewx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec,$/;"	f
+get_onewx0	past_method/hamiltonian_derivative.py	/^def get_onewx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):$/;"	f
+get_onewx1	hamiltonian_derivative.py	/^def get_onewx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,$/;"	f
+get_onewx1	past_method/hamiltonian_derivative.py	/^def get_onewx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,$/;"	f
+get_p0	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_p0(g0, complexsymmetric: bool, nelec):$/;"	f
+get_p0	cphf/zeroth_order_ghf.py	/^def get_p0(g0, complexsymmetric: bool, nelec):$/;"	f
+get_p1	cphf/first_order_ghf.py	/^def get_p1(g0, g1, complexsymmetric, nelec):$/;"	f
+get_p1	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_p1(g0, g1, complexsymmetric, nelec):$/;"	f
+get_pe0	cphf/troubleshooting/without_p1.py	/^def get_pe0(g0, nelec, mol):$/;"	f
+get_pi0	cphf/zeroth_order_ghf.py	/^def get_pi0(mol):$/;"	f
+get_pi0_spatial	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_pi0_spatial(mol):$/;"	f
+get_pi1	cphf/first_order_ghf.py	/^def get_pi1(mol, atom, coord):$/;"	f
+get_pi1	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_pi1(mol, atom, coord):$/;"	f
+get_pi1_partial	hamiltonian_derivative.py	/^def get_pi1_partial(mol, atom, coord):$/;"	f
+get_pi2_partial	hamiltonian_derivative.py	/^def get_pi2_partial(mol, atom, coord):$/;"	f
+get_s0mat	overlap_derivative.py	/^def get_s0mat(mol, g0_list, nelec, complexsymmetric):$/;"	f
+get_s0mat	past_method/overlap_derivative.py	/^def get_s0mat(mol, g0_list, nelec, complexsymmetric):$/;"	f
+get_s1	cphf/first_order_ghf.py	/^def get_s1(mol, atom, coord):$/;"	f
+get_s1	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_s1(mol, atom, coord):$/;"	f
+get_s1mat	overlap_derivative.py	/^def get_s1mat(mol, atom, coord, g0_list, g1_list, nelec,$/;"	f
+get_s1mat	past_method/overlap_derivative.py	/^def get_s1mat(mol, atom, coord, g0_list, nelec, complexsymmetric: bool):$/;"	f
+get_sao1_partial	overlap_derivative.py	/^def get_sao1_partial(mol, atom, coord):$/;"	f
+get_scf_derivatives_h2	test/h2/sto-3g/g2gu/get_derivatives.py	/^def get_scf_derivatives_h2(g_num):$/;"	f
+get_swx0	overlap_derivative.py	/^def get_swx0(mol, w_g0, x_g0, nelec, complexsymmetric):$/;"	f
+get_swx0	past_method/overlap_derivative.py	/^def get_swx0(wxlambda0, nelec):$/;"	f
+get_swx1	overlap_derivative.py	/^def get_swx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,$/;"	f
+get_swx1	past_method/overlap_derivative.py	/^def get_swx1(wxlambda0, wxlambda1, nelec):$/;"	f
+get_twowx0	hamiltonian_derivative.py	/^def get_twowx0(mol, w_g0_t, x_g0_t, wxlambda0, nelec, complexsymmetric: bool):$/;"	f
+get_twowx0	past_method/hamiltonian_derivative.py	/^def get_twowx0(mol, gw0_t, gx0_t, wxlambda0, nelec, complexsymmetric: bool):$/;"	f
+get_twowx1	hamiltonian_derivative.py	/^def get_twowx1(mol, atom, coord, w_g0, x_g0, w_g1, x_g1, nelec,$/;"	f
+get_twowx1	past_method/hamiltonian_derivative.py	/^def get_twowx1(mol, atom, coord, gw0_t, gx0_t, gw1_t, gx1_t, wxlambda0,$/;"	f
+get_wxlambda1	past_method/non_ortho.py	/^def get_wxlambda1(gw0, gw1, gx0, gx1, mol, atom, coord, nelec,$/;"	f
+get_x_lowdin	cphf/troubleshooting/spatial_CPHF_functions.py	/^def get_x_lowdin(mol, thresh: float = 1e-14):$/;"	f
+get_x_lowdin	cphf/zeroth_order_ghf.py	/^def get_x_lowdin(mol, thresh: float = 1e-14):$/;"	f
+get_xw_p	non_ortho.py	/^def get_xw_p(w_g_t, x_g_t, orbital_num, complexsymmetric: bool):$/;"	f
+get_xwp0	past_method/non_ortho.py	/^def get_xwp0(gw0_t, gx0_t, orbital_num, complexsymmetric: bool):$/;"	f
+get_xwp1	past_method/non_ortho.py	/^def get_xwp1(gw0_t, gx0_t, gw1_t, gx1_t, orbital_num, complexsymmetric: bool):$/;"	f
+h0mat	test/zeroth_order_test.py	/^h0mat = get_h0mat(mol, g0_list, nelec, False)$/;"	v
+h1mat	test/ci_test.py	/^h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+h1mat	test/e1_noci_test.py	/^h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+h1mat	test/linear_h3.py	/^h1mat = get_h1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+h2_atom	cphf/troubleshooting/pyscf_differences.py	/^h2_atom = 1$/;"	v
+h2_coord	cphf/troubleshooting/pyscf_differences.py	/^h2_coord = 2$/;"	v
+h2_mol_a	cphf/troubleshooting/pyscf_differences.py	/^h2_mol_a = gto.M($/;"	v
+h2_mol_b	cphf/troubleshooting/pyscf_differences.py	/^h2_mol_b = gto.M($/;"	v
+h2_nelec	cphf/troubleshooting/pyscf_differences.py	/^h2_nelec = 2$/;"	v
+h2o_atom	cphf/troubleshooting/pyscf_differences.py	/^h2o_atom = 0$/;"	v
+h2o_coord	cphf/troubleshooting/pyscf_differences.py	/^h2o_coord = 1$/;"	v
+h2o_mol_a	cphf/troubleshooting/pyscf_differences.py	/^h2o_mol_a = gto.M($/;"	v
+h2o_mol_b	cphf/troubleshooting/pyscf_differences.py	/^h2o_mol_b = gto.M($/;"	v
+h2o_nelec	cphf/troubleshooting/pyscf_differences.py	/^h2o_nelec = 10$/;"	v
+h3	past_method/overlap_derivative_test.py	/^h3 = h3_states2()$/;"	v
+h3	test/e1_noci_test.py	/^h3 = h3_states2()$/;"	v
+h3	test/linear_h3.py	/^h3 = h3_states2_linear()$/;"	v
+h3	test/overlap_derivative_test.py	/^h3 = h3_states2()$/;"	v
+h3	test/overlap_derivative_test.py	/^h3 = h3_states2_g1()$/;"	v
+h3	test/uhf_g1_test.py	/^h3 = h3_states4()$/;"	v
+h3	test/zeroth_order_test.py	/^h3 = h3_states2()$/;"	v
+h3_atom	cphf/troubleshooting/pyscf_differences.py	/^h3_atom = 1$/;"	v
+h3_coord	cphf/troubleshooting/pyscf_differences.py	/^h3_coord = 1$/;"	v
+h3_mol_a	cphf/troubleshooting/pyscf_differences.py	/^h3_mol_a = gto.M($/;"	v
+h3_mol_b	cphf/troubleshooting/pyscf_differences.py	/^h3_mol_b = gto.M($/;"	v
+h3_nelec	cphf/troubleshooting/pyscf_differences.py	/^h3_nelec = 2$/;"	v
+h3_states2	test/h3states/h3_states.py	/^class h3_states2:$/;"	c
+h3_states2_g1	test/h3states/h3_states.py	/^class h3_states2_g1:$/;"	c
+h3_states2_linear	test/h3states/h3_states.py	/^class h3_states2_linear:$/;"	c
+h3_states4	test/h3states/h3_states.py	/^class h3_states4:$/;"	c
+hcore_deriv	hamiltonian_derivative.py	/^    def hcore_deriv(atm_id):$/;"	f	function:get_hcore1_op
+lowdin_pairing	non_ortho.py	/^def lowdin_pairing(w_g, x_g, sao, nelec, complexsymmetric: bool):$/;"	f
+lowdin_pairing0	past_method/non_ortho.py	/^def lowdin_pairing0(gw0, gx0, mol, nelec, complexsymmetric: bool):$/;"	f
+lowdin_pairing1_p	non_ortho.py	/^def lowdin_pairing1_p(w_g, x_g, sao, nelec, complexsymmetric: bool, sao1,$/;"	f
+lowdin_prod	non_ortho.py	/^def lowdin_prod(wxlambda, rmind):$/;"	f
+lowdin_prod	past_method/non_ortho.py	/^def lowdin_prod(wxlambda0, rmind):$/;"	f
+m	cphf/run_calc_rhf.py	/^m = scf.RHF(mol)$/;"	v
+m	cphf/run_calc_uhf.py	/^m = scf.UHF(mol)$/;"	v
+m	cphf/troubleshooting/pyscf_differences.py	/^m = scf.RHF(h2_mol_a)$/;"	v
+m	cphf/troubleshooting/without_p1.py	/^m = scf.RHF(mol)$/;"	v
+m	test/lih/631gstar/test_basis.py	/^m = scf.UHF(mol)$/;"	v
+make_ghf	cphf/troubleshooting/spatial_CPHF_functions.py	/^def make_ghf(g0_rhf, nelec):$/;"	f
+mol	cphf/run_calc_rhf.py	/^mol = gto.M($/;"	v
+mol	cphf/run_calc_uhf.py	/^mol = gto.M($/;"	v
+mol	cphf/troubleshooting/without_p1.py	/^mol = gto.M($/;"	v
+mol	past_method/overlap_derivative_test.py	/^mol = h3.mol$/;"	v
+mol	test/ci_test.py	/^mol = gto.M($/;"	v
+mol	test/e1_noci_test.py	/^mol = h3.mol$/;"	v
+mol	test/h3states/h3_states.py	/^    mol = gto.M($/;"	v	class:h3_states2
+mol	test/h3states/h3_states.py	/^    mol = gto.M($/;"	v	class:h3_states2_g1
+mol	test/h3states/h3_states.py	/^    mol = gto.M($/;"	v	class:h3_states2_linear
+mol	test/h3states/h3_states.py	/^    mol = gto.M($/;"	v	class:h3_states4
+mol	test/lih/631gstar/test_basis.py	/^mol = gto.M($/;"	v
+mol	test/linear_h3.py	/^mol = h3.mol$/;"	v
+mol	test/overlap_derivative_test.py	/^mol = h3.mol$/;"	v
+mol	test/uhf_g1_test.py	/^mol = h3.mol$/;"	v
+mol	test/zeroth_order_test.py	/^mol = h3.mol$/;"	v
+nalpha	cphf/run_calc_uhf.py	/^nalpha = 2$/;"	v
+nalpha	test/h3states/h3_states.py	/^    nalpha = 2$/;"	v	class:h3_states2
+nalpha	test/h3states/h3_states.py	/^    nalpha = 2$/;"	v	class:h3_states2_g1
+nalpha	test/h3states/h3_states.py	/^    nalpha = 2$/;"	v	class:h3_states2_linear
+nalpha	test/h3states/h3_states.py	/^    nalpha = 2$/;"	v	class:h3_states4
+nbeta	cphf/run_calc_uhf.py	/^nbeta = 1$/;"	v
+nbeta	test/h3states/h3_states.py	/^    nbeta = 1$/;"	v	class:h3_states2
+nbeta	test/h3states/h3_states.py	/^    nbeta = 1$/;"	v	class:h3_states2_g1
+nbeta	test/h3states/h3_states.py	/^    nbeta = 1$/;"	v	class:h3_states2_linear
+nbeta	test/h3states/h3_states.py	/^    nbeta = 1$/;"	v	class:h3_states4
+nelec	cphf/run_calc_rhf.py	/^nelec = 2$/;"	v
+nelec	cphf/run_calc_uhf.py	/^nelec = 3$/;"	v
+nelec	cphf/troubleshooting/without_p1.py	/^nelec = 2$/;"	v
+nelec	past_method/overlap_derivative_test.py	/^nelec = h3.nelec$/;"	v
+nelec	test/ci_test.py	/^nelec = 2$/;"	v
+nelec	test/e1_noci_test.py	/^nelec = h3.nelec$/;"	v
+nelec	test/h3states/h3_states.py	/^    nelec = 3$/;"	v	class:h3_states2
+nelec	test/h3states/h3_states.py	/^    nelec = 3$/;"	v	class:h3_states2_g1
+nelec	test/h3states/h3_states.py	/^    nelec = 3$/;"	v	class:h3_states2_linear
+nelec	test/h3states/h3_states.py	/^    nelec = 3$/;"	v	class:h3_states4
+nelec	test/lih/631gstar/test_basis.py	/^nelec = 4$/;"	v
+nelec	test/linear_h3.py	/^nelec = h3.nelec$/;"	v
+nelec	test/overlap_derivative_test.py	/^nelec = h3.nelec$/;"	v
+nelec	test/uhf_g1_test.py	/^nelec = h3.nelec$/;"	v
+nelec	test/zeroth_order_test.py	/^nelec = h3.nelec$/;"	v
+plot_derivatives	test/h2/sto-3g/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h2/sto-3g/g2gu/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h2/sto-3g/g2gu/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h2/sto-3g/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h3/180/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h3/180/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h3/90/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/h3/90/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/4states/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/4states/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/631gstar/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/631gstar/plotting.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/sto3g/energy_plot.py	/^def plot_derivatives():$/;"	f
+plot_derivatives	test/lih/sto3g/plotting.py	/^def plot_derivatives():$/;"	f
+purelables	test/lih/631gstar/test_basis.py	/^purelables= mol.pure_lables()$/;"	v
+rhf_to_ghf	cphf/zeroth_order_ghf.py	/^def rhf_to_ghf(g0_rhf, nelec):$/;"	f
+s0mat	test/zeroth_order_test.py	/^s0mat = get_s0mat(mol, g0_list, nelec, False)$/;"	v
+s0matg0	test/overlap_derivative_test.py	/^s0matg0 = get_s0mat(mol, g0_list, nelec, False)$/;"	v
+s0matg1	test/overlap_derivative_test.py	/^s0matg1 = get_s0mat(mol, g0_list, nelec, False)$/;"	v
+s1mat	past_method/overlap_derivative_test.py	/^s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+s1mat	test/ci_test.py	/^s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+s1mat	test/e1_noci_test.py	/^s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+s1mat	test/linear_h3.py	/^s1mat = get_s1mat(mol, atom, coord, g0_list, g1_list, nelec, False)$/;"	v
+spin	cphf/run_calc_rhf.py	/^        spin = 0)$/;"	v
+spin	cphf/run_calc_uhf.py	/^        spin = 1)$/;"	v
+spin	cphf/troubleshooting/pyscf_differences.py	/^        spin = 0)$/;"	v
+spin	cphf/troubleshooting/without_p1.py	/^        spin = 0)$/;"	v
+spin	test/ci_test.py	/^        spin = 0)$/;"	v
+spin	test/h3states/h3_states.py	/^            spin = 1)$/;"	v	class:h3_states2
+spin	test/h3states/h3_states.py	/^            spin = 1)$/;"	v	class:h3_states2_g1
+spin	test/h3states/h3_states.py	/^            spin = 1)$/;"	v	class:h3_states2_linear
+spin	test/h3states/h3_states.py	/^            spin = 1)$/;"	v	class:h3_states4
+spin	test/lih/631gstar/test_basis.py	/^        spin = 0)$/;"	v
+uhf_to_ghf	cphf/zeroth_order_ghf.py	/^def uhf_to_ghf(g0_uhf_alpha, g0_uhf_beta, nalpha, nbeta):$/;"	f
+unit	cphf/run_calc_rhf.py	/^        unit = 'Bohr',$/;"	v
+unit	cphf/run_calc_uhf.py	/^        unit = 'Bohr',$/;"	v
+unit	cphf/troubleshooting/pyscf_differences.py	/^        unit = 'Bohr',$/;"	v
+unit	cphf/troubleshooting/without_p1.py	/^        unit = 'Bohr',$/;"	v
+unit	test/ci_test.py	/^        unit = 'Bohr',$/;"	v
+unit	test/h3states/h3_states.py	/^            unit = 'Bohr',$/;"	v	class:h3_states2
+unit	test/h3states/h3_states.py	/^            unit = 'Bohr',$/;"	v	class:h3_states2_g1
+unit	test/h3states/h3_states.py	/^            unit = 'Bohr',$/;"	v	class:h3_states2_linear
+unit	test/h3states/h3_states.py	/^            unit = 'Bohr',$/;"	v	class:h3_states4
+unit	test/lih/631gstar/test_basis.py	/^        unit = 'Bohr',$/;"	v
+write_e1_mat	cphf/first_order_ghf.py	/^def write_e1_mat(mol, nelec, complexsymmetric, g0_ghf = None):$/;"	f
+write_e1_single	cphf/first_order_ghf.py	/^def write_e1_single(mol, nelec, atom, coord, complexsymmetric, g0_ghf = None):$/;"	f

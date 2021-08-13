@@ -17,13 +17,6 @@ def rhf_to_ghf(g0_rhf, nelec):
 
     nbasis = g0_rhf.shape[1]
 
-    # hcore0 =get_hcore0_spatial(mol)
-    # pi0 = get_pi0_spatial(mol)
-    # f0 = get_f0_spatial(hcore0, pi0, mol)
-    # eta0,_ = np.linalg.eig(f0)
-    # index = np.argsort(eta0)
-    # g0_rhf = g0_rhf[index]
-
     if nelec % 2 == 0:
         nocc = int(nelec/2)
     else:
@@ -89,6 +82,8 @@ def get_x_lowdin(mol, thresh: float = 1e-14):
 
     :returns: the orthogonalisation matrix x
     """
+
+    #Do not really need this function with the current formulation
 
     omega = np.identity(2)
     spatial_overlap_s = mol.intor('int1e_ovlp')

@@ -70,5 +70,5 @@ def get_numerical_derivatives_lih(g_num, states_num):
             f.write(f"{bond_length}     {num_deriv}\n")
 
 
-get_analytic_derivatives_lih(90, 2, False)
+get_analytic_derivatives_lih(1, 2, False)
 # get_numerical_derivatives_lih(451, 2)

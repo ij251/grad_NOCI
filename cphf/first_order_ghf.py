@@ -2,7 +2,7 @@ from pyscf import gto, scf, grad
 import time
 import numpy as np
 import scipy
-from .zeroth_order_ghf import rhf_to_ghf, get_p0, get_hcore0, get_pi0, get_f0,\
+from zeroth_order_ghf import rhf_to_ghf, get_p0, get_hcore0, get_pi0, get_f0,\
 get_e0_nuc, get_e0_elec
 
 def get_s1(mol, atom, coord):
@@ -337,11 +337,6 @@ def get_g1_x(f1_x, s1_x, eta0, nelec):
 
             delta_eta0 = eta0[j] - eta0[i]
             g1_x[i,j] = (f1_x[i,j] - eta0[j]*s1_x[i,j])/delta_eta0
-            # print(i, j)
-            # print("f1_x[i,j]:\n", f1_x[i,j])
-            # print("occ orbital energy:", eta0[j])
-            # print("vir orbital energy:", eta0[i])
-            # print("delta_eta0:\n", delta_eta0)
 
 
     for j in range(nbasis):
@@ -434,18 +429,6 @@ def g1_iteration(complexsymmetric: bool, mol, atom, coord, nelec,
     eta0 = eta0[index]
     g0_x = g0_x[:, index] #Order g0 columns according to eigenvalues
 
-    # eta0sci, _ = scipy.linalg.eig(f0, s0)
-    # with np.printoptions(precision=3):
-    #     print("Before transforming:\n")
-    #     print("g0:\n", g0)
-    #     print("eta0\n", eta0)
-    # with np.printoptions(precision=3):
-    #     print("Before ordering:\n")
-    #     print("g0_x:\n", g0_x)
-    #     print("eta0_x\n", eta0_x)
-    # with np.printoptions(precision=3):
-    #     print("After ordering:\n")
-    #     print("g0_x:\n", g0_x)
 
     g1_x_guess = np.zeros_like(g0)
     g1_x = g1_x_guess
@@ -457,24 +440,12 @@ def g1_iteration(complexsymmetric: bool, mol, atom, coord, nelec,
         iter_num += 1
         p1_x = get_p1(g0_x, g1_x, complexsymmetric, nelec)
         f1_x = get_f1(pi0_x, p0_x, hcore1_x, pi1_x, p1_x)
-        # print("iteration number:", iter_num)
-        # print("g1_x max:", np.max(g1_x))
-        # print("f1_x max:", np.max(f1_x))
-        # assert np.max(f1_x) < 1e10
 
         g1_x_last = g1_x
         g1_x = get_g1_x(f1_x, s1_x, eta0, nelec)
         delta_g1_x = np.max(np.abs(g1_x - g1_x_last))
 
     g1 = np.dot(x, g1_x)
-    
-
-    # print("f0:\n", f0)
-    # print("f0_x:\n", f0_x)
-    # print("p0:\n", p0)
-    # print("p0_x:\n", p0_x)
-    # print("eta0:\n", eta0)
-    # print("eta0sci:", eta0sci)
 
     return g1
 
